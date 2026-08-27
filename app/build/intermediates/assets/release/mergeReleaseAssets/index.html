@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<title>Games</title>
+<style>
+  :root { --bg: #0b1220; --panel: rgba(22, 30, 46, .85); --border: rgba(148,163,184,.25); --text: #e5e7eb; --muted: #94a3b8; --brand: #2dd4bf; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; color: var(--text); background-color: #0b0c2a; background-image: linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px); background-size: 20px 20px; min-height: 100vh; }
+  .container { max-width: 1040px; margin: 0 auto; padding: 28px; }
+  .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+  .brand { display: flex; align-items: center; gap: 14px; }
+  .brand-mark { width: 44px; height: 44px; border-radius: 12px; object-fit: contain; background: transparent; }
+  .title { font-size: 26px; font-weight: 800; background: linear-gradient(90deg, #2dd4bf, #60a5fa); -webkit-background-clip: text; background-clip: text; color: transparent; letter-spacing: .3px; }
+  .version { font-size: 14px; color: var(--muted); padding: 8px 12px; border: 1px solid var(--border); border-radius: 999px; background: var(--panel); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+  .game-card { position: relative; display: block; border-radius: 20px; overflow: hidden; text-decoration: none; color: inherit; background: #0f1a2a; border: 1px solid var(--border); box-shadow: 0 8px 26px rgba(0,0,0,.45); transition: transform .18s ease, box-shadow .18s ease; }
+  .game-card:hover { transform: translateY(-4px); box-shadow: 0 14px 36px rgba(0,0,0,.6); }
+  .card-media { height: 160px; background: none; display: flex; align-items: center; justify-content: center; padding: 10px; }
+  .card-media img { width: auto; height: auto; max-width: 100%; max-height: 100%; object-fit: contain; }
+  .card-footer { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 12px; padding: 14px; background: #101827; }
+  .meta { display: grid; gap: 6px; }
+  .game-title { font-weight: 800; font-size: 16px; }
+  .game-sub { font-size: 13px; color: var(--muted); }
+  .avatars { display: flex; gap: 6px; }
+  .avatar { width: 24px; height: 24px; border-radius: 999px; background: linear-gradient(135deg,#334155,#0ea5e9); border: 1px solid rgba(255,255,255,.15); }
+  .play-now { display: inline-flex; align-items: center; gap: 8px; justify-content: center; padding: 8px 16px; min-height: 40px; border-radius: 12px; font-weight: 700; color: #0b1220; background: #2dd4bf; transition: all .2s ease; box-shadow: 0 4px 12px rgba(45, 212, 191, 0.2); }
+  .play-now:hover { background: #5eead4; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(45, 212, 191, 0.3); }
+  .play-now .btn-circle { width: auto; height: auto; border: none; background: transparent; }
+  .footer { margin-top: 32px; display: flex; gap: 16px; flex-wrap: wrap; }
+  .btn { display: inline-flex; align-items: center; gap: 10px; padding: 12px 24px; min-height: 48px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.03); color: #e5e7eb; cursor: pointer; font-weight: 600; transition: all .2s ease; backdrop-filter: blur(4px); }
+  .btn:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.2); transform: translateY(-2px); color: #fff; }
+  .btn:active { transform: scale(.98); }
+  .btn-label { letter-spacing: .2px; }
+  .btn-circle { display: inline-flex; align-items: center; justify-content: center; }
+  
+  @media (max-width: 768px) {
+    .container { padding: 22px; }
+    .title { font-size: 24px; }
+    .grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .card-media { height: auto; aspect-ratio: 1; padding: 0; }
+    .card-media img { width: 100%; height: 100%; object-fit: cover; border-radius: 20px 20px 0 0; }
+    .card-footer { flex-direction: column; align-items: center; text-align: center; padding: 10px; }
+    .meta { display: block; width: 100%; }
+    .game-title { font-size: 14px; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .game-sub { display: none; }
+    .play-now { display: none; }
+  }
+  @media (max-width: 520px) {
+    .container { padding: 12px; }
+    .grid { gap: 10px; }
+    .title { font-size: 20px; }
+    .brand-mark { width: 36px; height: 36px; }
+    .card-footer { padding: 8px; }
+    .game-title { font-size: 13px; }
+    .btn { padding: 10px; font-size: 13px; }
+  }
+  .modal-bg { position: fixed; inset: 0; background: rgba(3,6,12,.6); display: none; align-items: center; justify-content: center; padding: 16px; backdrop-filter: blur(6px); }
+  .modal { background: var(--panel); border: 1px solid var(--border); color: var(--text); border-radius: 18px; max-width: 620px; width: 100%; padding: 18px; box-shadow: 0 10px 30px rgba(0,0,0,.45); }
+  .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .modal-title { font-weight: 800; color: var(--brand); }
+  .close { background: transparent; color: var(--muted); border: none; font-size: 18px; cursor: pointer; }
+  .list { display: grid; gap: 10px; }
+  .list-item { padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border); background: rgba(17,24,39,.7); cursor: pointer; transition: filter .12s ease; }
+  .list-item:hover { filter: brightness(1.06); }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="brand">
+      <img class="brand-mark" src="https://i.postimg.cc/TwfZymP9/Icon-512x512-Color.png" alt="Brand">
+      <div class="title">Gems Color Games</div>
+    </div>
+    <div class="version">Version 1.13</div>
+  </div>
+
+  <div class="grid">
+    <a class="game-card" href="Gems%20Color%20Sorting.html">
+      <div class="card-media"><img src="https://i.postimg.cc/HxXYw5Sk/Icon-512x512-PNG.png" alt="Gems Color Sorting"></div>
+      <div class="card-footer">
+        <div class="meta">
+          <div class="game-title">Gems Color Sorting</div>
+          <div class="game-sub">Puzzle</div>
+          
+        </div>
+        <div class="play-now"><span class="btn-label">Play Now</span><span class="btn-circle">→</span></div>
+      </div>
+    </a>
+    <a class="game-card" href="Gems%20Sudoku%20Saga.html">
+      <div class="card-media"><img src="https://i.postimg.cc/MHYv81FQ/Gems-Sudoku-Logo.png" alt="Gems Sudoku Saga"></div>
+      <div class="card-footer">
+        <div class="meta">
+          <div class="game-title">Gems Sudoku Saga</div>
+          <div class="game-sub">Sudoku Puzzle</div>
+         
+        </div>
+        <div class="play-now"><span class="btn-label">Play Now</span><span class="btn-circle">→</span></div>
+      </div>
+    </a>
+ <a class="game-card" href="Gems%20Finger.html">
+      <div class="card-media"><img src="https://i.postimg.cc/xdkfG9CT/Gems-Finger.png" alt="Gems Sudoku Saga"></div>
+      <div class="card-footer">
+        <div class="meta">
+          <div class="game-title">MMM Gems Finger</div>
+          <div class="game-sub">Action</div>
+         
+        </div>
+        <div class="play-now"><span class="btn-label">Play Now</span><span class="btn-circle">→</span></div>
+      </div>
+    </a>
+  </div>
+
+  <div class="footer">
+    <button class="btn" id="policies-btn"><span class="btn-label">Policies</span><span class="btn-circle">→</span></button>
+    <button class="btn" id="share-btn"><span class="btn-label">Share App</span><span class="btn-circle">→</span></button>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-bg">
+  <div class="modal" role="dialog">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title"></div>
+      <button class="close" id="close-modal">✕</button>
+    </div>
+    <div id="modal-content"></div>
+  </div>
+  </div>
+
+<script>
+  const modalBg = document.getElementById('modal-bg');
+  const modalTitle = document.getElementById('modal-title');
+  const modalContent = document.getElementById('modal-content');
+  const closeModalBtn = document.getElementById('close-modal');
+  const POLICY_URLS = {
+    privacy: 'https://shorturl.at/AcJMF',
+    disclaimer: 'https://shorturl.at/MPNDf',
+    gdpr: 'https://shorturl.at/AcJMF',
+    about: 'https://shorturl.at/joWCM',
+    contact: 'https://shorturl.at/rsFli'
+  };
+  function openModal(title, html) { modalTitle.textContent = title; modalContent.innerHTML = html; modalBg.style.display = 'flex'; }
+  function closeModal() { modalBg.style.display = 'none'; }
+  closeModalBtn.addEventListener('click', closeModal);
+  modalBg.addEventListener('click', e => { if (e.target === modalBg) closeModal(); });
+
+  document.getElementById('policies-btn').addEventListener('click', () => {
+    const list = `
+      <div class="list">
+        <div class="list-item" data-policy="privacy">Privacy Policy</div>
+        <div class="list-item" data-policy="disclaimer">Disclaimer</div>
+        <div class="list-item" data-policy="gdpr">GDPR Policy</div>
+        <div class="list-item" data-policy="about">About Us</div>
+        <div class="list-item" data-policy="contact">Contact Us</div>
+      </div>
+    `;
+    openModal('Policies', list);
+    modalContent.querySelectorAll('.list-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const key = item.getAttribute('data-policy');
+        const url = POLICY_URLS[key];
+        if (url) { try { window.open(url, '_blank'); } catch(e){} closeModal(); return; }
+        if (key === 'privacy') openModal('Privacy Policy', '<div>Privacy Policy will be provided here.</div>');
+        else if (key === 'disclaimer') openModal('Disclaimer', '<div>Disclaimer will be provided here.</div>');
+        else if (key === 'gdpr') openModal('GDPR Policy', '<div>GDPR Policy will be provided here.</div>');
+        else if (key === 'about') openModal('About Us', '<div>About us information will be provided here.</div>');
+        else if (key === 'contact') openModal('Contact Us', '<div>Contact details will be provided here.</div>');
+      });
+    });
+  });
+
+  const aboutBtn = document.getElementById('about-btn');
+  if (aboutBtn) {
+    aboutBtn.addEventListener('click', () => {
+      openModal('About Us', '<div>About us information will be provided here.</div>');
+    });
+  }
+  const contactBtn = document.getElementById('contact-btn');
+  if (contactBtn) {
+    contactBtn.addEventListener('click', () => {
+      openModal('Contact Us', '<div>Contact details will be provided here.</div>');
+    });
+  }
+  document.getElementById('share-btn').addEventListener('click', async () => {
+    try { if (window.AndroidBridge && typeof AndroidBridge.shareApp === 'function') { AndroidBridge.shareApp(); return; } } catch(e){}
+    if (navigator.share) { try { await navigator.share({ title: 'Gems Color Sorting', text: "I'm playing Gems Color Sorting! Try it out:", url: 'https://play.google.com/store/apps/details?id=com.gems.sort.color.puzzle.game.liquid' }); } catch(e){} }
+    else { openModal('Share App', '<div>Sharing is not supported on this device.</div>'); }
+  });
+</script>
+</body>
+</html>

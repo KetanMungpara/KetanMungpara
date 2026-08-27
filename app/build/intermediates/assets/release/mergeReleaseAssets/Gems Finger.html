@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MMM Fingers - Ruby Edition</title>
+    <style>
+        :root {
+            --base-font-size: 16px;
+            --primary-red: #ff4757;
+            --accent-gold: #f1c40f;
+            --bg-dark: #0b0c2a;
+            --diamond-red: #ff3e3e;
+        }
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            touch-action: none; user-select: none;
+            overflow: hidden;
+        }
+        body {
+            background-color: var(--bg-dark);
+            background-image:
+                linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+            background-size: 20px 20px;
+            font-family: 'Arial Rounded MT Bold', 'Helvetica Rounded', Arial, sans-serif;
+        }
+        #ui {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; display: flex; flex-direction: column;
+            align-items: center; justify-content: flex-start; padding: env(safe-area-inset-top, 20px) 0;
+            z-index: 5;
+        }
+        #score { 
+            font-size: clamp(60px, 15vw, 100px); 
+            color: rgba(255,255,255,0.15); 
+            font-weight: 900; 
+            margin: 0; 
+            line-height: 1; 
+            transition: color 0.3s ease;
+        }
+        #score.new-best-active {
+            color: var(--accent-gold);
+            text-shadow: 0 0 20px rgba(241, 196, 15, 0.5);
+        }
+
+        #statsRow {
+            display: flex;
+            gap: 10px;
+            pointer-events: none;
+            margin-top: 10px;
+        }
+        .stat-pill {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 25px;
+            padding: 6px 18px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+        }
+        .stat-pill.highlight {
+            border-color: var(--accent-gold);
+            background: rgba(241, 196, 15, 0.2);
+            transform: scale(1.1);
+        }
+        .pill-label { color: rgba(255,255,255,0.5); font-size: 11px; text-transform: uppercase; font-weight: bold; }
+        .pill-value { color: #ffffff; font-size: 18px; font-weight: 800; }
+        
+        /* Families Policy Ad UI */
+        .ad-badge {
+            background: #fff;
+            color: #000;
+            font-size: 8px;
+            padding: 1px 3px;
+            border-radius: 3px;
+            font-weight: 900;
+            text-transform: uppercase;
+            margin-left: 4px;
+            vertical-align: middle;
+            border: 1px solid #000;
+        }
+        
+        .ad-button-pill {
+            background: rgba(46, 204, 113, 0.15);
+            border: 1px solid rgba(46, 204, 113, 0.4);
+            border-radius: 20px;
+            padding: 4px 12px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            pointer-events: auto;
+        }
+        .ad-button-pill:active { transform: scale(0.95); background: rgba(46, 204, 113, 0.3); }
+        
+        .diamond-icon-mini {
+            width: 18px;
+            height: 18px;
+            filter: drop-shadow(0 0 5px rgba(255,62,62,0.8));
+        }
+
+        /* New Best Notification */
+        #newBestPop {
+            position: absolute;
+            top: 20%;
+            background: var(--accent-gold);
+            color: black;
+            padding: 5px 15px;
+            border-radius: 10px;
+            font-weight: 900;
+            font-size: 14px;
+            transform: translateY(20px);
+            opacity: 0;
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 2px solid black;
+        }
+        #newBestPop.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        #gameOverModal {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.7);
+            background: #1a1b3a; padding: 30px; border-radius: 40px;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.8);
+            text-align: center; z-index: 100;
+            width: 85%; max-width: 340px;
+            visibility: hidden; opacity: 0;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: auto;
+            border: 4px solid var(--primary-red);
+        }
+        #gameOverModal.show { visibility: visible; opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        
+        .modal-header {
+            background: var(--primary-red); color: white;
+            padding: 10px 30px; border-radius: 20px;
+            display: inline-block; margin-bottom: 20px;
+            transform: rotate(-3deg); border: 3px solid #000;
+        }
+        
+        .score-box {
+            background: rgba(0,0,0,0.3); border-radius: 20px;
+            padding: 15px; margin-bottom: 15px; border: 2px solid rgba(255,255,255,0.1);
+        }
+        .btn-group { display: flex; flex-direction: column; gap: 12px; }
+        
+        button {
+            border: none; padding: 15px 0; border-radius: 25px;
+            font-size: 18px; font-weight: bold; cursor: pointer;
+            transition: all 0.1s;
+        }
+        #resumeBtn { background: var(--accent-gold); color: #000; border-bottom: 6px solid #b7950b; }
+        #retryBtn { background: #2ecc71; color: white; border-bottom: 6px solid #27ae60; }
+        #resumeBtn:active, #retryBtn:active { transform: translateY(4px); border-bottom-width: 2px; }
+        #resumeBtn:disabled { opacity: 0.5; filter: grayscale(1); }
+
+        #instructions {
+            position: absolute; bottom: 20%; width: 100%; text-align: center;
+            color: white; font-size: 18px; font-weight: bold; opacity: 0.6; pointer-events: none;
+        }
+
+        canvas { display: block; width: 100%; height: 100%; }
+
+        /* Settings UI */
+        .settings-btn {
+            width: 44px;
+            height: 44px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            pointer-events: auto;
+        }
+        .settings-btn:active { transform: scale(0.9); }
+        .settings-btn svg { width: 24px; height: 24px; fill: white; }
+
+        .settings-panel {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.7);
+            background: #1a1b3a;
+            padding: 30px;
+            border-radius: 30px;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.8);
+            z-index: 1001;
+            width: 80%;
+            max-width: 300px;
+            visibility: hidden;
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 3px solid var(--accent-gold);
+            text-align: center;
+            pointer-events: auto;
+        }
+        .settings-panel.show { visibility: visible; opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        .settings-panel h2 { color: white; margin-top: 0; margin-bottom: 25px; }
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .volume-container {
+            width: 100%;
+            margin-bottom: 25px;
+            text-align: left;
+        }
+        .volume-label {
+            color: rgba(255,255,255,0.7);
+            font-size: 14px;
+            margin-bottom: 8px;
+            display: block;
+            font-weight: bold;
+        }
+        .volume-slider {
+            width: 100%;
+            height: 6px;
+            background: #34495e;
+            border-radius: 3px;
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            background: var(--accent-gold);
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid white;
+        }
+        .toggle-btn {
+            width: 60px;
+            height: 30px;
+            background: #34495e;
+            border-radius: 15px;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .toggle-btn.active { background: #2ecc71; }
+        .toggle-circle {
+            width: 26px;
+            height: 26px;
+            background: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            transition: left 0.3s;
+        }
+        .toggle-btn.active .toggle-circle { left: 32px; }
+        
+        #closeSettings {
+            background: var(--primary-red);
+            color: white;
+            width: 100%;
+            padding: 12px;
+            border-radius: 15px;
+            margin-top: 10px;
+            border-bottom: 4px solid #c0392b;
+        }
+
+        /* Splash Screen */
+        #splashScreen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: var(--bg-dark);
+            z-index: 9999;
+            display: flex; align-items: center; justify-content: center;
+        }
+        #splashLogo {
+            width: 150px;
+            height: auto;
+            animation: splashAnim 5s linear forwards;
+        }
+        @keyframes splashAnim {
+            0% { transform: scale(0); opacity: 0; }
+            30% { transform: scale(1); opacity: 1; }
+            70% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(0); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div id="splashScreen">
+        <img id="splashLogo" src="https://i.postimg.cc/xdkfG9CT/Gems-Finger.png" alt="Logo">
+    </div>
+
+    <div class="settings-panel" id="settingsPanel">
+        <h2>SETTINGS</h2>
+        <div class="setting-item">
+            <span>MUSIC</span>
+            <div class="toggle-btn active" id="musicToggle">
+                <div class="toggle-circle"></div>
+            </div>
+        </div>
+        <div class="volume-container">
+            <span class="volume-label">MUSIC VOLUME</span>
+            <input type="range" min="0" max="1" step="0.1" value="0.5" class="volume-slider" id="volumeSlider">
+        </div>
+        <div class="setting-item">
+            <span>SOUND FX</span>
+            <div class="toggle-btn active" id="soundToggle">
+                <div class="toggle-circle"></div>
+            </div>
+        </div>
+        <button id="closeSettings">CLOSE</button>
+    </div>
+
+    <div id="gameHeader">
+        <div id="ui">
+        <h1 id="score">0</h1>
+        <div id="newBestPop">NEW BEST!</div>
+        <div id="statsRow">
+            <div id="bestPill" class="stat-pill">
+                <span class="pill-label">BEST</span>
+                <span id="headerHighScore" class="pill-value">0</span>
+            </div>
+            <div class="stat-pill">
+                <canvas id="miniDiamondCanvas" class="diamond-icon-mini"></canvas>
+                <span id="headerDiamonds" class="pill-value">0</span>
+            </div>
+            <div id="watchAdBtn" class="ad-button-pill">
+                <span style="color: #2ecc71; font-weight: 800; font-size: 13px;">EARN 3 💎</span>
+                <span class="ad-badge">Ad</span>
+            </div>
+            <div class="settings-btn" id="settingsBtn">
+                <svg viewBox="0 0 24 24"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.81,11.69,4.81,12c0,0.31,0.02,0.65,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>
+            </div>
+        </div>
+    </div>
+
+    <div id="instructions">HOLD TO PROTECT FINGER</div>
+
+    <div id="gameOverModal">
+        <div class="modal-header"><h2 style="margin:0">OUCH!</h2></div>
+        <div class="score-box">
+            <div style="color:rgba(255,255,255,0.5); font-size:12px;">SCORE</div>
+            <p id="finalScore" style="color:#fff; font-size:36px; font-weight:bold; margin:0;">0</p>
+        </div>
+        <div class="btn-group">
+            <button id="resumeBtn">RESUME (💎 3)</button>
+            <button id="retryBtn">RESTART</button>
+        </div>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const scoreEl = document.getElementById('score');
+    const headerHighScoreEl = document.getElementById('headerHighScore');
+    const headerDiamondsEl = document.getElementById('headerDiamonds');
+    const bestPill = document.getElementById('bestPill');
+    const newBestPop = document.getElementById('newBestPop');
+    const modal = document.getElementById('gameOverModal');
+    const finalScoreEl = document.getElementById('finalScore');
+    const retryBtn = document.getElementById('retryBtn');
+    const resumeBtn = document.getElementById('resumeBtn');
+    const instructions = document.getElementById('instructions');
+    const watchAdBtn = document.getElementById('watchAdBtn');
+    const settingsBtn = document.getElementById('settingsBtn');
+    const settingsPanel = document.getElementById('settingsPanel');
+    const closeSettings = document.getElementById('closeSettings');
+    const musicToggle = document.getElementById('musicToggle');
+    const soundToggle = document.getElementById('soundToggle');
+    const volumeSlider = document.getElementById('volumeSlider');
+
+    // Audio Context
+    let musicEnabled = true;
+    let soundEnabled = true;
+    let musicVolume = 0.5;
+
+    // Use Web Audio API for better control if possible, or stick to Audio objects with pre-loading
+    const bgMusic = new Audio('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3');
+    bgMusic.loop = true;
+    bgMusic.volume = musicVolume;
+    bgMusic.preload = 'auto';
+
+    const gameOverSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-funny-fail-low-tone-2874.mp3');
+    gameOverSound.preload = 'auto';
+    gameOverSound.load(); // Force pre-load
+
+    const collectSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-magic-marimba-2820.mp3');
+    collectSound.preload = 'auto';
+    collectSound.load(); // Force pre-load
+
+    function playMusic() {
+        if (musicEnabled) {
+            bgMusic.volume = musicVolume;
+            bgMusic.play().catch(e => console.log("Music play blocked by browser"));
+        }
+    }
+
+    function stopMusic() {
+        bgMusic.pause();
+    }
+
+    function playGameOver() {
+        if (soundEnabled) {
+            // Reset and play
+            gameOverSound.currentTime = 0;
+            gameOverSound.play().catch(e => console.log("SFX play blocked"));
+        }
+    }
+
+    function playCollect() {
+        if (soundEnabled) {
+            // Use a clone or reset to allow overlapping sounds
+            const clone = collectSound.cloneNode();
+            clone.volume = 0.7; // Slightly quieter
+            clone.play().catch(e => console.log("SFX play blocked"));
+        }
+    }
+
+    let width, height;
+    let isPlaying = false;
+    let score = 0;
+    let highscore = 0;
+    let diamonds = 0;
+    let obstacles = [];
+    let collectables = [];
+    let splatters = [];
+    let touchX = 0, touchY = 0;
+    let gameSpeed = 5;
+    let canResume = true;
+    let lastGemScore = 0;
+    let hasReachedNewBestThisRound = false;
+
+    // --- Persistence Logic ---
+    function saveData() {
+        try {
+            const data = {
+                highscore: highscore,
+                diamonds: diamonds,
+                musicEnabled: musicEnabled,
+                soundEnabled: soundEnabled,
+                musicVolume: musicVolume
+            };
+            localStorage.setItem('gemsFingerData', JSON.stringify(data));
+        } catch (e) {
+            console.error("Save failed", e);
+        }
+    }
+
+    function loadData() {
+        try {
+            const saved = localStorage.getItem('gemsFingerData');
+            if (saved) {
+                const data = JSON.parse(saved);
+                highscore = data.highscore || 0;
+                diamonds = data.diamonds || 0;
+                musicEnabled = data.musicEnabled !== undefined ? data.musicEnabled : true;
+                soundEnabled = data.soundEnabled !== undefined ? data.soundEnabled : true;
+                musicVolume = data.musicVolume !== undefined ? data.musicVolume : 0.5;
+
+                // Update UI immediately
+                headerHighScoreEl.innerText = highscore;
+                headerDiamondsEl.innerText = diamonds;
+                volumeSlider.value = musicVolume;
+                bgMusic.volume = musicVolume;
+                
+                // Update Toggles
+                if (!musicEnabled) musicToggle.classList.remove('active');
+                if (!soundEnabled) soundToggle.classList.remove('active');
+            }
+        } catch (e) {
+            console.error("Load failed", e);
+        }
+    }
+    
+    // Load data on startup
+    loadData();
+
+    // Remove splash screen after animation
+    setTimeout(() => {
+        const splash = document.getElementById('splashScreen');
+        if (splash) splash.style.display = 'none';
+    }, 5000);
+
+    const COLORS = [
+        { main: '#ff4757', light: '#ff6b81', dark: '#c0392b' },
+        { main: '#2ecc71', light: '#58d68d', dark: '#27ae60' },
+        { main: '#3498db', light: '#5dade2', dark: '#2980b9' },
+        { main: '#f1c40f', light: '#f4d03f', dark: '#f39c12' },
+        { main: '#9b59b6', light: '#af7ac5', dark: '#8e44ad' }
+    ];
+
+    const OFFSET_Y = 150;
+
+    function drawRuby(targetCtx, size) {
+        targetCtx.save();
+        const r = size;
+        const topY = -r * 0.7;
+        const midY = 0;
+        const botY = r;
+        const sideX = r;
+        const innerX = r * 0.6;
+
+        const drawFacet = (points, color) => {
+            targetCtx.fillStyle = color;
+            targetCtx.beginPath();
+            targetCtx.moveTo(points[0].x, points[0].y);
+            for (let i = 1; i < points.length; i++) targetCtx.lineTo(points[i].x, points[i].y);
+            targetCtx.closePath();
+            targetCtx.fill();
+        };
+
+        drawFacet([{x: -sideX, y: midY}, {x: 0, y: botY}, {x: 0, y: midY}], '#9e1a1a');
+        drawFacet([{x: sideX, y: midY}, {x: 0, y: botY}, {x: 0, y: midY}], '#7d1212');
+        drawFacet([{x: -sideX, y: midY}, {x: -innerX, y: topY}, {x: 0, y: topY}, {x: 0, y: midY}], '#ff3e3e');
+        drawFacet([{x: sideX, y: midY}, {x: innerX, y: topY}, {x: 0, y: topY}, {x: 0, y: midY}], '#d62d2d');
+
+        const tableGrad = targetCtx.createLinearGradient(-innerX, topY, innerX, topY);
+        tableGrad.addColorStop(0, '#ff8a8a');
+        tableGrad.addColorStop(1, '#ff5c5c');
+        drawFacet([{x: -innerX, y: topY}, {x: innerX, y: topY}, {x: 0, y: midY}], tableGrad);
+
+        targetCtx.strokeStyle = 'rgba(255,255,255,0.4)';
+        targetCtx.lineWidth = 1.5;
+        targetCtx.beginPath();
+        targetCtx.moveTo(-innerX * 0.8, topY + 2);
+        targetCtx.lineTo(0, midY - 2);
+        targetCtx.stroke();
+
+        targetCtx.strokeStyle = 'rgba(0,0,0,0.3)';
+        targetCtx.lineWidth = 1;
+        targetCtx.stroke();
+
+        targetCtx.restore();
+    }
+
+    function initMiniUI() {
+        const miniCanvas = document.getElementById('miniDiamondCanvas');
+        const mctx = miniCanvas.getContext('2d');
+        miniCanvas.width = 40; miniCanvas.height = 40;
+        mctx.translate(20, 20);
+        drawRuby(mctx, 15);
+    }
+
+    function resize() {
+        width = window.innerWidth;
+        height = window.innerHeight;
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = width * dpr;
+        canvas.height = height * dpr;
+        ctx.scale(dpr, dpr);
+        if (!isPlaying) { touchX = width / 2; touchY = height * 0.7; }
+    }
+
+    class Diamond {
+        constructor() {
+            this.size = 20;
+            this.x = Math.random() * (width - 60) + 30;
+            this.y = -50;
+            this.rotation = (Math.random() - 0.5) * 0.5;
+            this.pulse = 0;
+        }
+        update() {
+            this.y += gameSpeed;
+            this.pulse += 0.1;
+        }
+        draw() {
+            ctx.save();
+            ctx.translate(this.x, this.y);
+            ctx.rotate(this.rotation);
+            const glowSize = this.size * (1.2 + Math.sin(this.pulse) * 0.1);
+            const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, glowSize * 2);
+            grad.addColorStop(0, 'rgba(255, 62, 62, 0.4)');
+            grad.addColorStop(1, 'rgba(255, 62, 62, 0)');
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.arc(0, 0, glowSize * 2, 0, Math.PI * 2);
+            ctx.fill();
+            drawRuby(ctx, this.size);
+            ctx.restore();
+        }
+    }
+
+    class Obstacle {
+        constructor(type) {
+            this.type = type;
+            this.baseSize = type === 'eyeball' ? 50 : 25 + Math.random() * 15;
+            this.size = this.baseSize;
+            this.x = Math.random() * (width - 100) + 50;
+            this.y = -150;
+            this.rotation = 0;
+            this.rotSpeed = (Math.random() - 0.5) * 0.1;
+            this.colors = COLORS[Math.floor(Math.random() * COLORS.length)];
+            
+            // Scaling logic
+            this.scale = 1;
+            this.scalingUp = false;
+            this.scaleTimer = Math.random() * 100;
+        }
+        
+        update() { 
+            this.y += gameSpeed; 
+            this.rotation += this.rotSpeed; 
+            
+            // Growing/Shrinking logic
+            this.scaleTimer++;
+            if (!this.scalingUp && this.scaleTimer % 120 === 0) {
+                this.scalingUp = true;
+            }
+            
+            if (this.scalingUp) {
+                this.scale += 0.02; // Grow slow
+                if (this.scale >= 1.6) {
+                    this.scale = 1; // Instant small
+                    this.scalingUp = false;
+                }
+            }
+            this.size = this.baseSize * this.scale;
+        }
+
+        draw() {
+            ctx.save();
+            ctx.translate(this.x, this.y);
+            ctx.rotate(this.rotation);
+            ctx.scale(this.scale, this.scale); // Visual scale
+            
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 3;
+            
+            if (this.type === 'eyeball') {
+                this.drawEyeballMonster();
+            } else if (this.type === 'star') {
+                ctx.fillStyle = this.colors.main;
+                ctx.beginPath();
+                for (let i = 0; i < 16; i++) {
+                    let r = i % 2 === 0 ? this.baseSize : this.baseSize * 0.7;
+                    let a = (i / 16) * Math.PI * 2;
+                    ctx.lineTo(Math.cos(a)*r, Math.sin(a)*r);
+                }
+                ctx.closePath(); ctx.fill(); ctx.stroke();
+                this.drawSingleEye(0, 0, this.baseSize * 0.4);
+            } else {
+                ctx.fillStyle = this.colors.main;
+                ctx.beginPath(); 
+                ctx.roundRect(-this.baseSize, -this.baseSize, this.baseSize*2, this.baseSize*2, 8); 
+                ctx.fill(); ctx.stroke();
+                this.drawSingleEye(0, 0, this.baseSize * 0.5);
+            }
+            ctx.restore();
+        }
+
+        drawSingleEye(ex, ey, r) {
+            // White part
+            ctx.fillStyle = 'white';
+            ctx.beginPath(); ctx.arc(ex, ey, r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+            // Pupil
+            ctx.fillStyle = '#000';
+            // Simple pupil movement based on rotation
+            const px = Math.cos(this.rotation * 2) * (r * 0.3);
+            const py = Math.sin(this.rotation * 2) * (r * 0.3);
+            ctx.beginPath(); ctx.arc(ex + px, ey + py, r * 0.4, 0, Math.PI * 2); ctx.fill();
+            // Shine
+            ctx.fillStyle = 'white';
+            ctx.beginPath(); ctx.arc(ex + px - r*0.1, ey + py - r*0.1, r * 0.15, 0, Math.PI * 2); ctx.fill();
+        }
+
+        drawEyeballMonster() {
+            const r = this.baseSize * 0.5;
+            ctx.fillStyle = '#e67e22';
+            ctx.beginPath(); ctx.roundRect(-12, -r - 60, 24, 120, 12); ctx.fill(); ctx.stroke();
+            ctx.fillStyle = 'white';
+            for(let i=-50; i<50; i+=15) {
+                ctx.beginPath(); ctx.moveTo(-12, i); ctx.lineTo(-25, i+5); ctx.lineTo(-12, i+10); ctx.closePath(); ctx.fill(); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(12, i); ctx.lineTo(25, i+5); ctx.lineTo(12, i+10); ctx.closePath(); ctx.fill(); ctx.stroke();
+            }
+            ctx.fillStyle = '#e67e22';
+            ctx.beginPath(); ctx.arc(0, 40, r, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+            ctx.fillStyle = 'white';
+            ctx.beginPath(); ctx.ellipse(0, 40, r*0.7, r*0.4, 0, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+            ctx.fillStyle = '#4a2511';
+            ctx.beginPath(); ctx.arc(0, 40, r*0.2, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = 'white';
+            ctx.beginPath(); ctx.moveTo(-15, 60); ctx.lineTo(-10, 75); ctx.lineTo(-5, 60); ctx.fill(); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(15, 60); ctx.lineTo(10, 75); ctx.lineTo(5, 60); ctx.fill(); ctx.stroke();
+        }
+    }
+
+    function drawHand(x, y, pressed) {
+        ctx.save();
+        ctx.translate(x, y);
+        if (pressed) ctx.scale(0.95, 0.95);
+        const SKIN = '#F7B49B', OUTLINE = '#5D2512';
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = OUTLINE;
+        ctx.fillStyle = SKIN;
+        ctx.beginPath(); ctx.roundRect(-15, -OFFSET_Y, 30, OFFSET_Y + 10, 15); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = 'rgba(255,255,255,0.4)';
+        ctx.beginPath(); ctx.ellipse(0, -OFFSET_Y + 12, 8, 12, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = SKIN;
+        ctx.beginPath(); ctx.ellipse(0, 25, 45, 55, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        ctx.restore();
+    }
+
+    function onHit() {
+        if (!isPlaying) return;
+        for (let i = 0; i < 20; i++) {
+            splatters.push({
+                x: touchX, y: touchY - OFFSET_Y, size: 5 + Math.random() * 15,
+                alpha: 1, vx: (Math.random()-0.5)*12, vy: (Math.random()-0.5)*12
+            });
+        }
+        isPlaying = false;
+        stopMusic();
+        playGameOver();
+        finalScoreEl.innerText = Math.floor(score);
+        
+        // Families Policy: Clear labeling for ads
+        if (diamonds >= 3) {
+            resumeBtn.innerHTML = `RESUME (💎 3)`;
+        } else {
+            resumeBtn.innerHTML = `RESUME <span class="ad-badge" style="margin-left: 8px;">Ad</span>`;
+        }
+        
+        // Interstitial ad will show on restart, so label it clearly for Families Policy
+        retryBtn.innerHTML = `RESTART <span class="ad-badge" style="margin-left: 8px;">Ad</span>`;
+        
+        // Enable resume button if canResume is true
+        resumeBtn.disabled = !canResume;
+        
+        modal.classList.add('show');
+        instructions.style.display = 'block';
+        
+        // Remove high-score highlights
+        scoreEl.classList.remove('new-best-active');
+        bestPill.classList.remove('highlight');
+        newBestPop.classList.remove('show');
+    }
+
+    function checkHighScore() {
+        let currentIntScore = Math.floor(score);
+        if (currentIntScore > highscore && highscore > 0 && !hasReachedNewBestThisRound) {
+            hasReachedNewBestThisRound = true;
+            // Highlight UI
+            scoreEl.classList.add('new-best-active');
+            bestPill.classList.add('highlight');
+            newBestPop.classList.add('show');
+            
+            // Hide pop after a delay but keep text gold
+            setTimeout(() => {
+                newBestPop.classList.remove('show');
+            }, 2000);
+        }
+        
+        if (currentIntScore > highscore) {
+            highscore = currentIntScore;
+            headerHighScoreEl.innerText = highscore;
+            saveData(); // Save new highscore
+        }
+    }
+
+    function loop() {
+        ctx.clearRect(0, 0, width, height);
+
+        if (isPlaying) {
+            score += 0.2;
+            let currentIntScore = Math.floor(score);
+            scoreEl.innerText = currentIntScore;
+            
+            checkHighScore();
+
+            if (currentIntScore - lastGemScore >= 100) {
+                collectables.push(new Diamond());
+                lastGemScore = currentIntScore;
+            }
+            let spawnChance = 0.03 + (score/10000);
+            if (Math.random() < spawnChance) {
+                let type = score > 300 ? (Math.random() > 0.4 ? 'eyeball' : 'star') : 'square';
+                obstacles.push(new Obstacle(type));
+            }
+            gameSpeed = 5 + (score / 400);
+        }
+
+        const px = touchX, py = touchY - OFFSET_Y;
+
+        for (let i = collectables.length - 1; i >= 0; i--) {
+            let d = collectables[i]; d.update(); d.draw();
+            let dist = Math.sqrt((d.x-px)**2 + (d.y-py)**2);
+            if (dist < 45) {
+                diamonds++; 
+                headerDiamondsEl.innerText = diamonds;
+                saveData(); // Save collected diamonds
+                playCollect();
+                collectables.splice(i, 1);
+            } else if (d.y > height + 50) collectables.splice(i, 1);
+        }
+
+        for (let i = obstacles.length - 1; i >= 0; i--) {
+            let o = obstacles[i]; o.update(); o.draw();
+            if (isPlaying && Math.sqrt((o.x-px)**2 + (o.y-py)**2) < o.size + 15) onHit();
+            if (o.y > height + 200) obstacles.splice(i, 1);
+        }
+
+        ctx.fillStyle = "#ff4757";
+        for (let i = splatters.length - 1; i >= 0; i--) {
+            let s = splatters[i];
+            ctx.globalAlpha = s.alpha;
+            ctx.beginPath(); ctx.arc(s.x, s.y, s.size, 0, Math.PI*2); ctx.fill();
+            s.x += s.vx; s.y += s.vy; if (isPlaying) s.y += gameSpeed;
+            s.alpha -= 0.02; if (s.alpha <= 0) splatters.splice(i, 1);
+        }
+        ctx.globalAlpha = 1.0;
+        drawHand(touchX, touchY, isPlaying);
+        requestAnimationFrame(loop);
+    }
+
+    const updateCoords = (e) => {
+        const t = e.touches ? e.touches[0] : e;
+        const rect = canvas.getBoundingClientRect();
+        touchX = t.clientX - rect.left;
+        touchY = t.clientY - rect.top;
+    };
+
+    const startGame = (e) => {
+        if(modal.classList.contains('show') || settingsPanel.classList.contains('show')) return;
+        if (!isPlaying) playMusic();
+        isPlaying = true; 
+        instructions.style.display = 'none'; 
+        updateCoords(e);
+    };
+
+    canvas.addEventListener('mousedown', startGame);
+    canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startGame(e); }, {passive: false});
+    window.addEventListener('mousemove', (e) => { if (isPlaying) updateCoords(e); });
+    window.addEventListener('touchmove', (e) => { if (isPlaying) { e.preventDefault(); updateCoords(e); } }, {passive: false});
+    window.addEventListener('mouseup', onHit);
+    window.addEventListener('touchend', onHit);
+    window.addEventListener('resize', resize);
+
+    window.resetGame = () => {
+        score = 0; 
+        lastGemScore = 0; 
+        hasReachedNewBestThisRound = false;
+        obstacles = []; 
+        collectables = []; 
+        modal.classList.remove('show'); 
+        canResume = true;
+        scoreEl.innerText = "0";
+        scoreEl.classList.remove('new-best-active');
+        bestPill.classList.remove('highlight');
+    };
+
+    retryBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (window.AndroidBridge && window.AndroidBridge.showInterstitialAdForRetry) {
+             window.AndroidBridge.showInterstitialAdForRetry();
+        } else {
+             window.resetGame();
+        }
+    });
+
+    window.resumeGameAfterAd = () => {
+        // User watched ad to get enough diamonds to resume. 
+        // We add 3 (reward) then effectively use 3 (resume cost).
+        // Or simply: Resume without cost because they paid with attention.
+        // User instruction: "show rewarded video add and grand and add 3 dimonds to his balance so user can resume game"
+        
+        diamonds += 3;
+        headerDiamondsEl.innerText = diamonds;
+        saveData(); // Save reward
+
+        // Visual feedback
+        headerDiamondsEl.style.color = '#2ecc71';
+        headerDiamondsEl.style.transform = 'scale(1.5)';
+        setTimeout(() => {
+            headerDiamondsEl.style.color = '#ffffff';
+            headerDiamondsEl.style.transform = 'scale(1)';
+        }, 500);
+
+        // Auto-resume logic
+        if (canResume) {
+            diamonds -= 3; 
+            headerDiamondsEl.innerText = diamonds;
+            saveData(); // Save deduction
+
+            obstacles = []; 
+            modal.classList.remove('show'); 
+            canResume = false;
+            
+            if (hasReachedNewBestThisRound) {
+                scoreEl.classList.add('new-best-active');
+                bestPill.classList.add('highlight');
+            }
+        }
+    };
+
+    resumeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        
+        // Check if user has enough diamonds
+        if (diamonds >= 3) {
+            if (canResume) {
+                diamonds -= 3;
+                headerDiamondsEl.innerText = diamonds;
+                saveData(); // Save deduction
+
+                obstacles = []; 
+                modal.classList.remove('show'); 
+                canResume = false;
+
+                if (hasReachedNewBestThisRound) {
+                    scoreEl.classList.add('new-best-active');
+                    bestPill.classList.add('highlight');
+                }
+            }
+        } else {
+            // Not enough diamonds, show ad - The button is already labeled "Ad" in onHit()
+            if (window.AndroidBridge && window.AndroidBridge.showResumeRewardAd) {
+                 window.AndroidBridge.showResumeRewardAd();
+            } else {
+                 console.log("Not enough diamonds and no Ad Bridge (Web Test)");
+                 // For testing on web, you can uncomment this:
+                 // window.resumeGameAfterAd();
+            }
+        }
+    });
+
+    window.addDiamonds = (amount) => {
+        diamonds += amount;
+        headerDiamondsEl.innerText = diamonds;
+        saveData(); // Save reward
+        // Visual feedback
+        headerDiamondsEl.style.color = '#2ecc71';
+        headerDiamondsEl.style.transform = 'scale(1.5)';
+        setTimeout(() => {
+            headerDiamondsEl.style.color = '#ffffff';
+            headerDiamondsEl.style.transform = 'scale(1)';
+        }, 500);
+    };
+
+    if (watchAdBtn) {
+        watchAdBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent game interaction
+             if (window.AndroidBridge && window.AndroidBridge.showDiamondRewardAd) {
+                 window.AndroidBridge.showDiamondRewardAd();
+             } else {
+                 console.log("Ad requested (Desktop/Web mode)");
+                 // For testing on web
+                 // window.addDiamonds(3);
+             }
+        });
+    }
+
+    // Settings Panel Event Listeners
+    settingsBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        settingsPanel.classList.add('show');
+    });
+
+    closeSettings.addEventListener('click', (e) => {
+        e.stopPropagation();
+        settingsPanel.classList.remove('show');
+    });
+
+    musicToggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        musicEnabled = !musicEnabled;
+        musicToggle.classList.toggle('active', musicEnabled);
+        if (!musicEnabled) stopMusic();
+        else if (isPlaying) playMusic();
+        saveData();
+    });
+
+    soundToggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        soundEnabled = !soundEnabled;
+        soundToggle.classList.toggle('active', soundEnabled);
+        saveData();
+    });
+
+    volumeSlider.addEventListener('input', (e) => {
+        musicVolume = parseFloat(e.target.value);
+        bgMusic.volume = musicVolume;
+    });
+
+    volumeSlider.addEventListener('change', (e) => {
+        saveData();
+    });
+
+    initMiniUI();
+    resize();
+    loop();
+</script>
+</body>
+</html>

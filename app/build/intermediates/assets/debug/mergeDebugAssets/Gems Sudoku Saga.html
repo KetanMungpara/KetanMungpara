@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Gems Sudoku Saga</title>
+    <style>
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.08);
+            --glass-border: rgba(255, 255, 255, 0.15);
+            
+            /* Saga Gem Colors */
+            --red-main: #ff3e3e; --red-glow: rgba(255, 62, 62, 0.5);
+            --green-main: #2ecc71; --green-glow: rgba(46, 204, 113, 0.5);
+            --blue-main: #3498db; --blue-glow: rgba(52, 152, 219, 0.5);
+            --yellow-main: #f1c40f; --yellow-glow: rgba(241, 196, 15, 0.5);
+            --pink-main: #fd79a8; --pink-glow: rgba(253, 121, 168, 0.5);
+            --purple-main: #9b59b6; --purple-glow: rgba(155, 89, 182, 0.5);
+            --orange-main: #e67e22; --orange-glow: rgba(230, 126, 34, 0.5);
+            --cyan-main: #00d2d3; --cyan-glow: rgba(0, 210, 211, 0.5);
+            --lime-main: #badc58; --lime-glow: rgba(186, 220, 88, 0.5);
+
+            --grad-easy: linear-gradient(135deg, #4ade80, #16a34a);
+            --grad-moderate: linear-gradient(135deg, #60a5fa, #2563eb);
+            --grad-hard: linear-gradient(135deg, #f87171, #dc2626);
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #0b0c2a;
+      background-image:        linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+      background-size: 20px 20px;
+            background-attachment: fixed;
+            color: white;
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+        }
+
+        /* Splash Screen */
+        #splash-screen {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #0b0c2a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 0.5s ease-out;
+        }
+
+        .logo-anim {
+            width: 200px;
+            animation: logoSequence 3s forwards;
+        }
+
+        @keyframes logoSequence {
+            0% { transform: scale(0.1); opacity: 0; }
+            66% { transform: scale(1.5); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* Home Screen */
+        #home-screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            width: 100%;
+            text-align: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .home-logo {
+            width: 180px;
+            filter: drop-shadow(0 0 20px rgba(241, 196, 15, 0.4));
+            margin-bottom: 10px;
+            animation: float 4s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .home-title {
+            font-size: 2.5rem;
+            margin: 0;
+            background: linear-gradient(to bottom, #fff, #cbd5e1);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 900;
+            letter-spacing: -1px;
+        }
+
+        .home-subtitle {
+            font-size: 1rem;
+            opacity: 0.7;
+            margin-bottom: 40px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .menu-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+            max-width: 320px;
+        }
+
+        .mode-btn {
+            position: relative;
+            padding: 18px 30px;
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.05);
+            color: white;
+            font-size: 1.2rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .mode-btn .btn-label {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .mode-btn .difficulty-tag {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.8;
+            margin-bottom: -4px;
+        }
+
+        .mode-btn .btn-icon {
+            font-size: 1.5rem;
+            opacity: 0.9;
+        }
+
+        .btn-easy { border-left: 6px solid #4ade80; }
+        .btn-easy:hover { background: var(--grad-easy); transform: translateX(5px); box-shadow: 0 10px 20px rgba(74, 222, 128, 0.3); }
+
+        .btn-moderate { border-left: 6px solid #60a5fa; }
+        .btn-moderate:hover { background: var(--grad-moderate); transform: translateX(5px); box-shadow: 0 10px 20px rgba(96, 165, 250, 0.3); }
+
+        .btn-hard { border-left: 6px solid #f87171; }
+        .btn-hard:hover { background: var(--grad-hard); transform: translateX(5px); box-shadow: 0 10px 20px rgba(248, 113, 113, 0.3); }
+
+        /* Game Screen Header */
+        #game-screen { display: none; width: 100%; align-items: center; flex-direction: column; padding-top: 10px; }
+
+        .top-navbar {
+            width: 95%;
+            max-width: 500px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            padding: 8px 12px;
+            border-radius: 50px;
+            border: 1px solid var(--glass-border);
+            margin-bottom: 15px;
+        }
+
+        .nav-left { display: flex; align-items: center; gap: 8px; }
+        .nav-center { font-weight: 800; color: #f1c40f; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; display: flex; flex-direction: column; align-items: center; }
+        .nav-right { display: flex; align-items: center; gap: 8px; }
+
+        .icon-btn {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid var(--glass-border);
+            color: white;
+            padding: 8px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            width: 38px;
+            height: 38px;
+        }
+        .icon-btn:hover { background: rgba(255,255,255,0.2); transform: scale(1.05); }
+
+        .mistakes-container {
+            display: flex;
+            gap: 4px;
+            background: rgba(0,0,0,0.3);
+            padding: 4px 8px;
+            border-radius: 20px;
+        }
+        .heart-icon { font-size: 14px; transition: transform 0.3s; }
+        .heart-empty { filter: grayscale(1) opacity(0.4); }
+
+        .timer-display {
+            font-size: 0.75rem;
+            color: white;
+            opacity: 0.8;
+            font-family: monospace;
+            margin-top: 2px;
+        }
+
+        .hint-combo-circle {
+            background: #f1c40f;
+            color: #000;
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            padding: 4px 12px 4px 6px;
+            gap: 6px;
+            font-weight: 800;
+            font-size: 0.85rem;
+            border: none;
+            transition: all 0.2s;
+            box-shadow: 0 4px 15px rgba(241, 196, 15, 0.3);
+        }
+
+        .hint-trigger {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            padding: 2px 4px;
+        }
+
+        .video-mini-btn {
+            background: #000;
+            color: #f1c40f;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        /* Settings Style */
+        .settings-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 10px 0;
+            padding: 12px 18px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+        }
+
+        .toggle-switch {
+            width: 46px;
+            height: 24px;
+            background: #333;
+            border-radius: 12px;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .toggle-switch.active { background: #f1c40f; }
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 3px; left: 3px;
+            width: 18px; height: 18px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s;
+        }
+        .toggle-switch.active::after { transform: translateX(22px); }
+
+        /* GEM DESIGN */
+        .gem { 
+            width: 80%; 
+            height: 80%; 
+            position: relative; 
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4));
+        }
+
+        .gem::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.6) 0%, transparent 50%, rgba(0,0,0,0.3) 100%);
+            z-index: 2;
+        }
+
+        .gem::after {
+            content: '';
+            position: absolute;
+            top: 15%; left: 15%; width: 30%; height: 30%;
+            background: rgba(255, 255, 255, 0.8);
+            filter: blur(2px);
+            border-radius: 50%;
+            z-index: 3;
+        }
+
+        .ball-red { background: var(--red-main); clip-path: polygon(50% 0%, 100% 35%, 82% 100%, 18% 100%, 0% 35%); box-shadow: 0 0 15px var(--red-glow); }
+        .ball-green { background: var(--green-main); clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%); box-shadow: 0 0 15px var(--green-glow); }
+        .ball-blue { background: var(--blue-main); clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%); box-shadow: 0 0 15px var(--blue-glow); }
+        .ball-yellow { background: var(--yellow-main); clip-path: polygon(50% 0%, 90% 20%, 100% 60%, 75% 100%, 25% 100%, 0% 60%, 10% 20%); box-shadow: 0 0 15px var(--yellow-glow); }
+        .ball-pink { background: var(--pink-main); clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%); box-shadow: 0 0 15px var(--pink-glow); }
+        .ball-purple { background: var(--purple-main); clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%); box-shadow: 0 0 15px var(--purple-glow); }
+        .ball-orange { background: var(--orange-main); clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); box-shadow: 0 0 15px var(--orange-glow); }
+        .ball-cyan { background: var(--cyan-main); clip-path: polygon(0% 15%, 15% 0%, 85% 0%, 100% 15%, 100% 85%, 85% 100%, 15% 100%, 0% 85%); box-shadow: 0 0 15px var(--cyan-glow); }
+        .ball-lime { background: var(--lime-main); clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%); box-shadow: 0 0 15px var(--lime-glow); }
+
+        /* Board Style */
+        .board-container {
+            margin: 10px;
+            position: relative;
+        }
+
+        .grid { 
+            display: grid; 
+            background: rgba(0, 0, 0, 0.4);
+            border: 2px solid #fff; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.6);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .cell { 
+            background: rgba(255, 255, 255, 0.03); 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            aspect-ratio: 1 / 1; 
+            cursor: pointer; 
+            border: 0.5px solid rgba(255, 255, 255, 0.2); 
+            transition: all 0.2s; 
+            position: relative; 
+            box-sizing: border-box;
+        }
+
+        .cell.fixed { 
+            background: rgba(255, 255, 255, 0.08); 
+            cursor: default; 
+        }
+
+        .cell.error { 
+            background: rgba(255, 62, 62, 0.4); 
+            animation: shake 0.4s; 
+        }
+
+        .cell.hinted { 
+            background: rgba(241, 196, 15, 0.3); 
+            animation: hintPulse 1s ease-out; 
+        }
+        
+        .border-right { border-right: 2px solid #fff !important; }
+        .border-bottom { border-bottom: 2px solid #fff !important; }
+
+        .picker-container { 
+            background: var(--glass-bg); 
+            backdrop-filter: blur(15px); 
+            padding: 15px; 
+            border-radius: 40px; 
+            margin: 15px; 
+            display: flex; gap: 12px; 
+            flex-wrap: nowrap; 
+            justify-content: flex-start; 
+            overflow-x: auto;
+            overflow-y: hidden;
+            border: 1px solid var(--glass-border); 
+        }
+        .picker-item { 
+            width: 44px; 
+            height: 44px; 
+            cursor: pointer; 
+            border: 2px solid transparent; 
+            transition: all 0.3s;
+            display: flex; align-items: center; justify-content: center;
+            flex: 0 0 auto;
+        }
+        .picker-item.active { 
+            transform: scale(1.3) translateY(-5px); 
+            filter: brightness(1.2) drop-shadow(0 0 10px rgba(255,255,255,0.5));
+        }
+        .picker-item.eraser { 
+            background: rgba(255,255,255,0.1); 
+            border-radius: 50%; 
+            color: white; 
+            font-size: 20px; 
+            border: 2px solid rgba(255,255,255,0.25);
+        }
+        .picker-item.eraser.active { border-color: #ffffff; box-shadow: 0 0 10px rgba(255,255,255,0.6); }
+
+        /* Overlays & Modals */
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(12px);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #1e1b4b, #312e81);
+            padding: 30px;
+            border-radius: 35px;
+            text-align: center;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.8);
+            max-width: 400px;
+            width: 85%;
+            transform: scale(0.5);
+            opacity: 0;
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .overlay.active { display: flex; }
+        .overlay.active .modal-content { transform: scale(1); opacity: 1; }
+
+        .action-btn { 
+            background: linear-gradient(to right, #f1c40f, #f39c12);
+            color: #000; padding: 12px 30px; border-radius: 50px; border: none; 
+            font-weight: 800; cursor: pointer; font-size: 1rem; text-transform: uppercase;
+            transition: all 0.3s;
+        }
+
+        .stat-badge {
+            background: rgba(241, 196, 15, 0.15);
+            color: #f1c40f;
+            padding: 6px 15px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            font-weight: 800;
+            border: 1px solid rgba(241, 196, 15, 0.3);
+        }
+
+        @keyframes hintPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.3); filter: brightness(1.5); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-6px); }
+            75% { transform: translateX(6px); }
+        }
+
+        .icon { width: 22px; height: 22px; fill: currentColor; }
+        
+        input[type=range] {
+            width: 100px;
+            accent-color: #f1c40f;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Splash Screen -->
+    <div id="splash-screen">
+        <img src="https://i.postimg.cc/MHYv81FQ/Gems-Sudoku-Logo.png" class="logo-anim" alt="Gems Sudoku Logo">
+    </div>
+
+    <!-- Home Screen -->
+    <div id="home-screen">
+        <img src="https://i.postimg.cc/MHYv81FQ/Gems-Sudoku-Logo.png" class="home-logo" alt="Logo">
+        <h1 class="home-title">Gems Sudoku</h1>
+        <p class="home-subtitle">Saga Quest</p>
+        
+        <div class="menu-container">
+            <button class="mode-btn btn-easy" onclick="startGame('easy')">
+                <span class="btn-label">
+                    <span class="difficulty-tag">Novice</span>
+                    <span>Easy Realm</span>
+                </span>
+                <span class="btn-icon">🍃</span>
+            </button>
+            <button class="mode-btn btn-moderate" onclick="startGame('moderate')">
+                <span class="btn-label">
+                    <span class="difficulty-tag">Adept</span>
+                    <span>Crystal Path</span>
+                </span>
+                <span class="btn-icon">🔷</span>
+            </button>
+            <button class="mode-btn btn-hard" onclick="startGame('hard')">
+                <span class="btn-label">
+                    <span class="difficulty-tag">Master</span>
+                    <span>Gem Legend</span>
+                </span>
+                <span class="btn-icon">🔥</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="game-screen">
+        <div class="top-navbar">
+            <div class="nav-left">
+                <button class="icon-btn" onclick="showHome()">
+                    <svg class="icon" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+                </button>
+                <div class="mistakes-container" id="mistakes-ui">
+                    <span class="heart-icon">❤️</span>
+                    <span class="heart-icon">❤️</span>
+                    <span class="heart-icon">❤️</span>
+                </div>
+            </div>
+
+            <div class="nav-center">
+                <div id="diff-text">Easy Saga</div>
+                <div class="timer-display" id="game-timer">00:00</div>
+            </div>
+
+            <div class="nav-right">
+                <button class="icon-btn" onclick="showSettings()">
+                    <svg class="icon" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+                </button>
+                <div class="hint-combo-circle">
+                    <div class="video-mini-btn" onclick="watchAd('hints')">
+                        <svg class="icon" viewBox="0 0 24 24" style="width:16px"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+                    </div>
+                    <div class="hint-trigger" onclick="useHint()">
+                        💡 <span id="hint-count">5</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-bottom: 10px;">
+            <div class="stat-badge" id="level-badge">Level 1</div>
+        </div>
+
+        <div class="board-container">
+            <div id="grid" class="grid"></div>
+        </div>
+
+        <div class="picker-container" id="picker"></div>
+    </div>
+
+    <!-- Overlays -->
+    <div id="win-modal" class="overlay">
+        <div class="modal-content">
+            <img id="win-gif" src="" style="width:180px;height:180px;border-radius:50%;object-fit:cover;margin-bottom:20px;border:4px solid #f1c40f;">
+            <h2 id="win-title">Brilliant!</h2>
+            <p id="win-time-display" style="font-weight:bold; color:#f1c40f;"></p>
+            <button class="action-btn" onclick="nextLevel()">Next Level</button>
+        </div>
+    </div>
+
+    <div id="game-over-modal" class="overlay">
+        <div class="modal-content">
+            <div style="font-size: 3rem; margin-bottom: 10px;">💔</div>
+            <h2>Energy Depleted!</h2>
+            <button class="action-btn" onclick="watchAd('lives')">Restore Energy (Ad)</button>
+            <button class="action-btn" style="margin-top:10px; background:rgba(255,255,255,0.1); color:white" onclick="restartLevel()">Restart Level</button>
+        </div>
+    </div>
+
+
+    <div id="settings-modal" class="overlay">
+        <div class="modal-content">
+            <h2 style="margin-top:0">Settings</h2>
+            <div class="settings-row">
+                <span>Ambient Chimes</span>
+                <div id="music-toggle" class="toggle-switch active" onclick="toggleMusic()"></div>
+            </div>
+            <div class="settings-row">
+                <span>Chime Volume</span>
+                <input type="range" min="0" max="1" step="0.1" value="0.3" id="volume-slider" onchange="updateVolume()">
+            </div>
+            <div class="settings-row">
+                <span>Sound Effects</span>
+                <div id="sfx-toggle" class="toggle-switch active" onclick="toggleSFX()"></div>
+            </div>
+            <button class="action-btn" style="width: 100%; margin-top: 10px" onclick="hideSettings()">Back to Quest</button>
+        </div>
+    </div>
+
+    <script>
+        // --- IMPROVED AMBIENT AUDIO ENGINE (BELL CHIMES) ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let musicActive = true, sfxActive = true;
+        let chimeIntervalId = null;
+        let chimeVolume = 0.3;
+
+        // Preload the requested Bell Ringing sound
+        const bellAudio = new Audio('https://www.soundjay.com/misc/sounds/bell-ringing-05.wav');
+        bellAudio.volume = chimeVolume;
+
+        const startAmbientChimes = () => {
+            if (!musicActive || chimeIntervalId) return;
+            
+            const scheduleNextChime = () => {
+                if (!musicActive) return;
+                
+                // Play the bell
+                bellAudio.currentTime = 0;
+                bellAudio.volume = chimeVolume;
+                bellAudio.play().catch(e => console.log("Audio play blocked by browser."));
+                
+                // Random delay between 4 to 12 seconds for a peaceful ambiance
+                const nextDelay = 4000 + Math.random() * 8000;
+                chimeIntervalId = setTimeout(scheduleNextChime, nextDelay);
+            };
+            
+            scheduleNextChime();
+        };
+
+        const stopAmbientChimes = () => {
+            clearTimeout(chimeIntervalId);
+            chimeIntervalId = null;
+        };
+
+        const playMoveSFX = (type) => {
+            if (!sfxActive) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            
+            if (type === 'correct') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.05);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.2);
+            } else if (type === 'wrong') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+                osc.frequency.linearRampToValueAtTime(100, audioCtx.currentTime + 0.2);
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+            }
+        };
+
+        function toggleMusic() {
+            musicActive = !musicActive;
+            document.getElementById('music-toggle').classList.toggle('active', musicActive);
+            if (musicActive) {
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                startAmbientChimes();
+            } else {
+                stopAmbientChimes();
+            }
+        }
+        
+        let wasMusicActiveBeforeAd = false;
+        window.__onAdShow = function() {
+            wasMusicActiveBeforeAd = musicActive;
+            stopAmbientChimes();
+            try { bellAudio.pause(); } catch(e) {}
+        };
+        window.__onAdDismiss = function() {
+            if (wasMusicActiveBeforeAd) {
+                if (audioCtx.state === 'suspended') { try { audioCtx.resume(); } catch(e){} }
+                startAmbientChimes();
+            }
+            wasMusicActiveBeforeAd = false;
+        };
+
+        function updateVolume() {
+            chimeVolume = parseFloat(document.getElementById('volume-slider').value);
+            bellAudio.volume = chimeVolume;
+        }
+
+        function toggleSFX() {
+            sfxActive = !sfxActive;
+            document.getElementById('sfx-toggle').classList.toggle('active', sfxActive);
+        }
+
+        function showSettings() {
+            document.getElementById('settings-modal').classList.add('active');
+        }
+        function hideSettings() {
+            document.getElementById('settings-modal').classList.remove('active');
+        }
+
+        // --- GAME LOGIC ---
+        let currentLevel = parseInt(localStorage.getItem('gems_sudoku_level')) || 1;
+        let selectedDifficulty = localStorage.getItem('gems_sudoku_diff') || 'easy';
+        let hintsLeft = parseInt(localStorage.getItem('gems_sudoku_hints')) || 5;
+        let lastInterstitialShownAtLevel = parseInt(localStorage.getItem('gems_sudoku_last_inter')) || 0;
+
+        let mistakes = 0, maxMistakes = 3, lastMistakePos = null;
+        let size = 4, boxW = 2, boxH = 2, selectedColor = 1;
+        let solution = [], puzzle = [], userGrid = [];
+        let secondsElapsed = 0, timerInterval = null;
+
+        const gemClasses = ['', 'ball-red', 'ball-green', 'ball-blue', 'ball-yellow', 'ball-pink', 'ball-purple', 'ball-orange', 'ball-cyan', 'ball-lime'];
+        const victoryGifs = ["https://user-images.githubusercontent.com/14011726/94132137-7d4fc100-fe7c-11ea-8512-69f90cb65e48.gif"];
+
+        window.addEventListener('load', () => {
+            updateHintUI();
+            setTimeout(() => {
+                document.getElementById('splash-screen').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('splash-screen').style.display = 'none';
+                    showHome();
+                }, 500);
+            }, 2500);
+        });
+
+        function showHome() {
+            stopTimer();
+            document.getElementById('home-screen').style.display = 'flex';
+            document.getElementById('game-screen').style.display = 'none';
+        }
+
+        function startGame(diff) {
+            selectedDifficulty = diff;
+            localStorage.setItem('gems_sudoku_diff', diff);
+            document.getElementById('home-screen').style.display = 'none';
+            document.getElementById('game-screen').style.display = 'flex';
+            document.getElementById('diff-text').innerText = diff.charAt(0).toUpperCase() + diff.slice(1) + " Saga";
+            
+            // Start the bell ambiance when the game starts
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            startAmbientChimes();
+            
+            initLevel();
+        }
+
+        function initLevel() {
+            mistakes = 0; updateMistakesUI();
+            if (currentLevel <= 3) size = 4;
+            else if (currentLevel <= 8) size = 6;
+            else size = Math.random() > 0.4 ? 9 : 6;
+
+            if (size === 4) { boxW = 2; boxH = 2; }
+            else if (size === 6) { boxW = 3; boxH = 2; }
+            else { boxW = 3; boxH = 3; }
+
+            document.getElementById('level-badge').innerText = `Level ${currentLevel}`;
+            if (currentLevel % 3 === 0 && lastInterstitialShownAtLevel !== currentLevel) { showInterstitialAd(); lastInterstitialShownAtLevel = currentLevel; localStorage.setItem('gems_sudoku_last_inter', lastInterstitialShownAtLevel); }
+            generateSudoku();
+            createPuzzle(selectedDifficulty);
+            renderPicker();
+            renderGrid();
+            startTimer();
+        }
+
+        function startTimer() {
+            stopTimer(); secondsElapsed = 0;
+            timerInterval = setInterval(() => {
+                secondsElapsed++;
+                let mins = Math.floor(secondsElapsed / 60).toString().padStart(2, '0');
+                let secs = (secondsElapsed % 60).toString().padStart(2, '0');
+                document.getElementById('game-timer').innerText = `${mins}:${secs}`;
+            }, 1000);
+        }
+
+        function stopTimer() { clearInterval(timerInterval); }
+
+        function generateSudoku() {
+            solution = Array.from({ length: size }, () => Array(size).fill(0));
+            solveSudoku(solution);
+        }
+
+        function solveSudoku(grid) {
+            for (let row = 0; row < size; row++) {
+                for (let col = 0; col < size; col++) {
+                    if (grid[row][col] === 0) {
+                        let nums = Array.from({length: size}, (_, i) => i + 1).sort(() => Math.random() - 0.5);
+                        for (let n of nums) {
+                            if (isValid(grid, row, col, n)) {
+                                grid[row][col] = n;
+                                if (solveSudoku(grid)) return true;
+                                grid[row][col] = 0;
+                            }
+                        }
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        function isValid(grid, r, c, n) {
+            for (let i = 0; i < size; i++) {
+                if (grid[r][i] === n) return false;
+                if (grid[i][c] === n) return false;
+            }
+            let sR = Math.floor(r / boxH) * boxH, sC = Math.floor(c / boxW) * boxW;
+            for (let i = 0; i < boxH; i++) 
+                for (let j = 0; j < boxW; j++) 
+                    if (grid[sR + i][sC + j] === n) return false;
+            return true;
+        }
+
+        function createPuzzle(diff) {
+            puzzle = solution.map(row => [...row]);
+            let ratio = diff === 'easy' ? 0.5 : (diff === 'moderate' ? 0.35 : 0.22);
+            let attempts = size * size - Math.floor(size * size * ratio);
+            while (attempts > 0) {
+                let r = Math.floor(Math.random() * size), c = Math.floor(Math.random() * size);
+                if (puzzle[r][c] !== 0) { puzzle[r][c] = 0; attempts--; }
+            }
+            userGrid = puzzle.map(row => [...row]);
+        }
+
+        function renderPicker() {
+            const picker = document.getElementById('picker');
+            picker.innerHTML = '';
+            const eraser = document.createElement('div');
+            eraser.className = `picker-item eraser ${selectedColor === 0 ? 'active' : ''}`;
+            eraser.innerHTML = '✕';
+            eraser.onclick = () => { selectedColor = 0; renderPicker(); };
+            picker.appendChild(eraser);
+
+            for (let i = 1; i <= size; i++) {
+                const item = document.createElement('div');
+                item.className = `picker-item ${selectedColor === i ? 'active' : ''}`;
+                const gem = document.createElement('div');
+                gem.className = `gem ${gemClasses[i]}`;
+                item.appendChild(gem);
+                item.onclick = () => { selectedColor = i; renderPicker(); };
+                picker.appendChild(item);
+            }
+        }
+
+        function renderGrid(hintPos = null) {
+            const container = document.getElementById('grid');
+            container.innerHTML = '';
+            container.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
+            
+            const cellDimension = Math.min((window.innerWidth - 60) / size, size === 9 ? 40 : 55);
+
+            for (let r = 0; r < size; r++) {
+                for (let c = 0; c < size; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.style.width = cellDimension + 'px';
+                    cell.style.height = cellDimension + 'px';
+                    
+                    if ((c + 1) % boxW === 0 && c !== size - 1) cell.classList.add('border-right');
+                    if ((r + 1) % boxH === 0 && r !== size - 1) cell.classList.add('border-bottom');
+                    
+                    if (hintPos && hintPos.r === r && hintPos.c === c) cell.classList.add('hinted');
+
+                    if (puzzle[r][c] !== 0) {
+                        cell.classList.add('fixed');
+                        drawGem(cell, puzzle[r][c]);
+                    } else {
+                        if (userGrid[r][c] !== 0) drawGem(cell, userGrid[r][c]);
+                        cell.onclick = () => {
+                            if (mistakes >= maxMistakes) return;
+                            if (selectedColor === 0) {
+                                userGrid[r][c] = 0; renderGrid();
+                            } else {
+                                if (selectedColor !== solution[r][c]) {
+                                    handleMistake(r, c);
+                                } else {
+                                    userGrid[r][c] = selectedColor;
+                                    playMoveSFX('correct');
+                                    renderGrid(); checkWin();
+                                }
+                            }
+                        };
+                    }
+                    container.appendChild(cell);
+                }
+            }
+        }
+
+        function drawGem(cell, id) {
+            cell.innerHTML = '';
+            const g = document.createElement('div');
+            g.className = `gem ${gemClasses[id]}`;
+            cell.appendChild(g);
+        }
+
+        function handleMistake(r, c) {
+            mistakes++; 
+            updateMistakesUI();
+            playMoveSFX('wrong');
+            lastMistakePos = { r, c };
+            
+            const cell = document.querySelectorAll('.cell')[r * size + c];
+            cell.classList.add('error');
+            drawGem(cell, selectedColor);
+
+            setTimeout(() => {
+                if (mistakes >= maxMistakes) {
+                    stopTimer(); 
+                    document.getElementById('game-over-modal').classList.add('active');
+                } else {
+                    cell.classList.remove('error');
+                    cell.innerHTML = '';
+                    if(userGrid[r][c] !== 0) {
+                        drawGem(cell, userGrid[r][c]);
+                    }
+                }
+            }, 600);
+        }
+
+        function updateMistakesUI() {
+            const hearts = document.querySelectorAll('.heart-icon');
+            hearts.forEach((h, i) => h.classList.toggle('heart-empty', i >= maxMistakes - mistakes));
+        }
+
+        function checkWin() {
+            if (userGrid.every((row, r) => row.every((val, c) => val === solution[r][c]))) {
+                stopTimer();
+                const modal = document.getElementById('win-modal');
+                document.getElementById('win-gif').src = victoryGifs[0];
+                document.getElementById('win-time-display').innerText = `Time: ${document.getElementById('game-timer').innerText}`;
+                modal.classList.add('active');
+            }
+        }
+
+        function useHint() {
+            if (hintsLeft <= 0) return watchAd('hints');
+            let empties = [];
+            for (let r=0; r<size; r++) for (let c=0; c<size; c++) if (userGrid[r][c] === 0) empties.push({r,c});
+            if (empties.length) {
+                let p = empties[Math.floor(Math.random()*empties.length)];
+                userGrid[p.r][p.c] = solution[p.r][p.c];
+                hintsLeft--; updateHintUI(); renderGrid(p); checkWin();
+            }
+        }
+
+        function updateHintUI() {
+            document.getElementById('hint-count').innerText = hintsLeft;
+            localStorage.setItem('gems_sudoku_hints', hintsLeft);
+        }
+        
+        function showCustomMessage(message) {
+            const existing = document.getElementById('custom-alert-popup');
+            if (existing) return;
+            const popup = document.createElement('div');
+            popup.id = 'custom-alert-popup';
+            popup.className = 'overlay active';
+            popup.innerHTML = '<div class="modal-content"><p style="margin-bottom:12px">' + message + '</p><button class="action-btn" id="custom-alert-ok">OK</button></div>';
+            document.body.appendChild(popup);
+            const btn = document.getElementById('custom-alert-ok');
+            if (btn) btn.onclick = () => { popup.remove(); };
+        }
+        
+        let requestedRewardType = null;
+        const RewardedAds = {
+            available() {
+                try { return !!(window.AndroidBridge && typeof AndroidBridge.showRewardAd === 'function'); } catch(e) { return false; }
+            },
+            show() {
+                try {
+                    if (this.available()) {
+                        AndroidBridge.showRewardAd();
+                    } else {
+                        showCustomMessage('Ad not available on this device');
+                    }
+                } catch(e) { }
+            }
+        };
+        
+        function showInterstitialAd() {
+            try {
+                if (window.AndroidBridge && typeof AndroidBridge.showInterstitialAd === 'function') {
+                    AndroidBridge.showInterstitialAd();
+                    return;
+                }
+            } catch(e){}
+        }
+
+        function watchAd(type) {
+            requestedRewardType = type;
+            RewardedAds.show();
+        }
+        
+        window.addHintsAfterAd = function(amount) {
+            if (requestedRewardType === 'hints') {
+                hintsLeft += amount;
+                updateHintUI();
+            } else if (requestedRewardType === 'lives') {
+                mistakes = 0;
+                updateMistakesUI();
+                if (lastMistakePos) {
+                    userGrid[lastMistakePos.r][lastMistakePos.c] = 0;
+                    lastMistakePos = null;
+                }
+                renderGrid();
+                startTimer();
+            }
+            requestedRewardType = null;
+            document.getElementById('game-over-modal').classList.remove('active');
+        }
+
+        function restartLevel() {
+            document.getElementById('game-over-modal').classList.remove('active');
+            initLevel();
+        }
+
+        function nextLevel() {
+            currentLevel++; localStorage.setItem('gems_sudoku_level', currentLevel);
+            showInterstitialAd(); lastInterstitialShownAtLevel = currentLevel; localStorage.setItem('gems_sudoku_last_inter', lastInterstitialShownAtLevel);
+            document.getElementById('win-modal').classList.remove('active');
+            initLevel();
+        }
+    </script>
+</body>
+</html>

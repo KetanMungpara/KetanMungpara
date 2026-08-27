@@ -1,0 +1,3117 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Ball Sort Game</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Icons" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+<style type="text/tailwindcss">
+    :root {
+      --tube-width: min(60px, 15vw);
+      --tube-height: min(240px, 60vw);
+      --ball-size: min(48px, 12vw);
+      --border-width: min(4px, 1vw);
+    }
+    /* Base responsive typography */
+    :root {
+      --base-font-size: clamp(14px, 2vw, 16px);
+      --h1-size: clamp(24px, 4vw, 36px);
+      --h2-size: clamp(20px, 3.5vw, 30px);
+      --h3-size: clamp(18px, 3vw, 24px);
+      --button-text: clamp(14px, 2.5vw, 18px);
+    }
+    
+    body {
+      background-color: #0b0c2a;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+      background-size: 20px 20px;
+      min-height: 100vh;
+      overflow-x: hidden;
+      font-size: var(--base-font-size);
+      line-height: 1.5;
+    }
+    
+    h1, .h1-size {
+      font-size: var(--h1-size);
+      line-height: 1.2;
+    }
+    
+    h2, .h2-size {
+      font-size: var(--h2-size);
+      line-height: 1.25;
+    }
+    
+    h3, .h3-size {
+      font-size: var(--h3-size);
+      line-height: 1.3;
+    }
+    
+    button, .button-text {
+      font-size: var(--button-text);
+    }
+    
+    /* Responsive container sizes */
+    .tube {
+      width: var(--tube-width);
+      height: var(--tube-height);
+      border: var(--border-width) solid rgba(255, 255, 255, 0.5);
+      border-top: none;
+      border-radius: 0 0 calc(var(--tube-width) / 2) calc(var(--tube-width) / 2);
+      position: relative;
+      display: flex;
+      flex-direction: column-reverse;
+      align-items: center;
+      padding-bottom: calc(var(--border-width) + 1px);
+    }
+    .ball {
+      width: var(--ball-size);
+      height: var(--ball-size);
+      border-radius: 50%;
+      margin-bottom: 2px;
+      cursor: pointer;
+      position: relative;
+      background-image: radial-gradient(circle at 16px 16px, var(--color-light), var(--color-dark));
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4), inset 0 -2px 4px rgba(0, 0, 0, 0.3);
+      -webkit-transform-style: preserve-3d;
+      transform-style: preserve-3d;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 1;
+    }
+    
+    .ball.moving {
+      animation: moveBallAnimation 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      filter: blur(2px);
+      box-shadow: 0 0 15px var(--color-light);
+      z-index: 100;
+    }
+    
+    @keyframes moveBallAnimation {
+      0% {
+        transform: scale(1) translateY(0);
+        filter: blur(0);
+      }
+      50% {
+        transform: scale(1.2) translateY(-20px);
+        filter: blur(2px);
+      }
+      100% {
+        transform: scale(1) translateY(0);
+        filter: blur(0);
+      }
+    }
+    
+    .ball::before {
+      content: '';
+      position: absolute;
+      top: 5px;
+      left: 10px;
+      width: 10px;
+      height: 5px;
+      background: rgba(255, 255, 255, 0.4);
+      border-radius: 50%;
+      transform: rotate(-45deg);
+      filter: blur(2px);
+    }
+    
+    .ball::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: radial-gradient(circle at center, var(--color-light), transparent);
+      opacity: 0;
+      z-index: -1;
+      transition: opacity 0.3s ease;
+    }
+    
+    .ball.moving::after {
+      opacity: 0.3;
+      animation: trailFade 0.5s ease-out;
+    }
+    
+    @keyframes trailFade {
+      0% {
+        transform: scale(1);
+        opacity: 0.3;
+      }
+      100% {
+        transform: scale(2);
+        opacity: 0;
+      }
+    }
+    
+    .ball:hover {
+      transform: translateY(-10px) scale(1.05);
+    }
+    .popup-bg {
+      background-color: rgba(0, 0, 0, 0.7);
+      z-index: 9999;
+    }
+    .popup-card {
+      z-index: 10000;
+      background-color: rgba(17, 24, 39, 0.95);
+    }
+    :root {
+      --red-light: #ff7b7b;
+      --red-dark: #e53e3e;
+      --green-light: #68d391;
+      --green-dark: #38a169;
+      --blue-light: #63b3ed;
+      --blue-dark: #3182ce;
+      --yellow-light: #f6e05e;
+      --yellow-dark: #d69e2e;
+      --pink-light: #fbb6ce;
+      --pink-dark: #ed64a6;
+      --purple-light: #b794f6;
+      --purple-dark: #805ad5;
+      --orange-light: #fbd38d;
+      --orange-dark: #ed8936;
+      --cyan-light: #76e4f7;
+      --cyan-dark: #0891b2;
+      --lime-light: #bef264;
+      --lime-dark: #65a30d;
+    }
+    .ball-red {
+      --color-light: var(--red-light);
+      --color-dark: var(--red-dark);
+    }
+    .ball-green {
+      --color-light: var(--green-light);
+      --color-dark: var(--green-dark);
+    }
+    .ball-blue {
+      --color-light: var(--blue-light);
+      --color-dark: var(--blue-dark);
+    }
+    .ball-yellow {
+      --color-light: var(--yellow-light);
+      --color-dark: var(--yellow-dark);
+    }
+    .ball-pink {
+      --color-light: var(--pink-light);
+      --color-dark: var(--pink-dark);
+    }
+    .ball-purple {
+      --color-light: var(--purple-light);
+      --color-dark: var(--purple-dark);
+    }
+    .ball-orange {
+      --color-light: var(--orange-light);
+      --color-dark: var(--orange-dark);
+    }
+    .ball-cyan {
+      --color-light: var(--cyan-light);
+      --color-dark: var(--cyan-dark);
+    }
+    .ball-lime {
+      --color-light: var(--lime-light);
+      --color-dark: var(--lime-dark);
+    }
+    
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      75% { transform: translateX(5px); }
+    }
+    
+    .tube.selected {
+      border-color: #fbbf24 !important;
+      border-width: 6px !important;
+      box-shadow: 0 0 20px rgba(251, 191, 36, 0.5) !important;
+    }
+    
+    .level-card {
+        background: linear-gradient(145deg, #1e1a3e, #13102d);
+        box-shadow: 5px 5px 15px rgba(0,0,0,0.3), -5px -5px 15px rgba(255,255,255,0.05);
+        transition: all 0.3s ease;
+    }
+    .level-card.unlocked {
+        background: linear-gradient(145deg, #2a2f4a, #1f2338);
+    }
+    .level-card.unlocked:hover {
+        transform: translateY(-5px);
+        box-shadow: 8px 8px 20px rgba(0,0,0,0.4), -8px -8px 20px rgba(255,255,255,0.07);
+    }
+    .level-card.locked {
+      background: linear-gradient(145deg, #1a1733, #100d26);
+    }
+    .level-card.current {
+      background: linear-gradient(145deg, #2dd4bf, #14b8a6);
+      box-shadow: 0 0 20px rgba(45, 212, 191, 0.5);
+    }
+    .unlock-btn {
+        background: linear-gradient(to right, #f2c94c, #f2994a);
+        transition: all 0.3s ease;
+    }
+    .unlock-btn:hover {
+        box-shadow: 0 0 15px #f2c94c;
+    }
+    
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+    }
+    .scrollbar-hide {
+        -ms-overflow-style: none; 
+        scrollbar-width: none;
+    }
+    
+    /* Amazing Level Complete Effects */
+    @keyframes confetti {
+        0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+        100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+    }
+    
+    @keyframes celebrate {
+        0%, 100% { transform: scale(1) rotate(0deg); }
+        25% { transform: scale(1.1) rotate(-5deg); }
+        75% { transform: scale(1.1) rotate(5deg); }
+    }
+    
+    @keyframes pointsFloat {
+        0% { transform: translateY(0) scale(0.5); opacity: 0; }
+        50% { transform: translateY(-30px) scale(1.2); opacity: 1; }
+        100% { transform: translateY(-60px) scale(1); opacity: 0; }
+    }
+    
+    @keyframes rainbow {
+        0% { filter: hue-rotate(0deg); }
+        100% { filter: hue-rotate(360deg); }
+    }
+    
+    .confetti-piece {
+        position: fixed;
+        width: 10px;
+        height: 10px;
+        background: #f39c12;
+        z-index: 9999;
+        animation: confetti 3s linear infinite;
+    }
+    
+    .celebration-effect {
+        animation: celebrate 0.6s ease-in-out;
+    }
+    
+    .points-float {
+        position: fixed;
+        font-size: 24px;
+        font-weight: bold;
+        color: #f1c40f;
+        z-index: 9999;
+        animation: pointsFloat 2s ease-out forwards;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    }
+    
+    .popup-card {
+        background: linear-gradient(145deg, #2c294f, #1a1733);
+        box-shadow: 10px 10px 30px rgba(0,0,0,0.5), -10px -10px 30px rgba(255,255,255,0.08);
+    }
+    .switch {
+        position: relative;
+        display: inline-block;
+        width: 60px;
+        height: 34px;
+    }
+    .switch input { 
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #13102d;
+        -webkit-transition: .4s;
+        transition: .4s;
+        border-radius: 34px;
+        border: 1px solid #4a4a6a;
+    }
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 26px;
+        width: 26px;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        -webkit-transition: .4s;
+        transition: .4s;
+        border-radius: 50%;
+        background: linear-gradient(145deg, #f0f0f0, #cacaca);
+    }
+    input:checked + .slider {
+        background-color: #2dd4bf;
+    }
+    input:focus + .slider {
+        box-shadow: 0 0 1px #2dd4bf;
+    }
+    input:checked + .slider:before {
+        -webkit-transform: translateX(26px);
+        -ms-transform: translateX(26px);
+        transform: translateX(26px);
+        background: linear-gradient(145deg, #5eeada, #2dd4bf);
+    }
+    
+    .bomb-btn-active, .shuffle-btn-active, ._2x-btn-active, ._5x-btn-active {
+        background-color: #f59e0b !important;
+        box-shadow: 0 0 20px #f59e0b;
+        transform: scale(1.1);
+    }
+    body.bomb-mode-active .tube, body.shuffle-mode-active .tube {
+        cursor: crosshair;
+    }
+    @keyframes flash {
+        0%, 100% { box-shadow: 0 0 0 rgba(255,255,255,0); }
+        50% { box-shadow: 0 0 25px rgba(255,255,255,0.8); }
+    }
+    @keyframes timer-glow {
+        0%, 100% { 
+            border-color: #f59e0b;
+            box-shadow: 0 0 10px #f59e0b;
+        }
+        50% { 
+            border-color: #fef08a;
+            box-shadow: 0 0 20px #fef08a;
+        }
+    }
+    .timer-active {
+        animation: timer-glow 1.5s infinite;
+    }
+
+    /* Splash Screen Animations */
+    @keyframes splash-zoom-in {
+        from {
+            transform: scale(0.8);
+            opacity: 0;
+        }
+        to {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+    
+    @keyframes fadeOut {
+        from {
+            opacity: 1;
+        }
+        to {
+            opacity: 0;
+            visibility: hidden;
+        }
+    }
+    
+    /* Re-using zoomIn for popups */
+    @keyframes zoomIn {
+        from {
+            transform: scale(0.5);
+            opacity: 0;
+        }
+        to {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+    .animate-zoomIn {
+        animation: zoomIn 0.3s ease-out forwards;
+    }
+
+    .animate-splash-zoom-in {
+        animation: splash-zoom-in 3s ease-out forwards; /* 3 second zoom in */
+    }
+    
+    .animate-fadeOut {
+         animation: fadeOut 0.5s ease-out forwards;
+         animation-delay: 1s; /* Hold for 3 seconds before fading */
+    }
+  </style>
+  <!-- Audio elements for music and sound effects -->
+  <audio id="background-music" loop>
+    <!-- Using royalty-free music URLs - you can replace with your own music files -->
+    <source src="https://www.soundjay.com/misc/sounds/bell-ringing-05.wav" type="audio/wav">
+    <!-- Fallback to a simple tone if external source fails -->
+  </audio>
+  
+  <audio id="ball-move-sound" preload="auto">
+    <!-- Ball movement sound effect -->
+  </audio>
+  
+  <audio id="level-complete-sound" preload="auto">
+    <!-- Level completion sound effect -->
+  </audio>
+  
+  <audio id="hint-sound" preload="auto">
+    <!-- Hint activation sound effect -->
+  </audio>
+</head>
+<body class="font-sans">
+
+<!-- Splash Screen -->
+<div id="splash-screen" class="fixed inset-0 bg-[#0b0c2a] flex items-center justify-center z-50">
+    <img src="https://i.postimg.cc/HxXYw5Sk/Icon-512x512-PNG.png" alt="Game Logo" class="w-48 h-48 animate-splash-zoom-in">
+</div>
+
+<!-- Main Game Container (Initially Hidden) -->
+<div class="min-h-screen flex flex-col items-center justify-between p-4 text-white hidden" id="game-container">
+<header class="w-full flex flex-wrap justify-between items-center gap-2 p-2 sm:p-4">
+<button class="bg-teal-500 p-2 sm:p-3 rounded-full shadow-lg hover:bg-teal-600 transition-colors" id="settings-btn">
+<span class="material-icons text-base sm:text-lg">settings</span>
+</button>
+<div class="flex items-center gap-2 sm:gap-4">
+<button class="bg-indigo-500 p-2 sm:p-3 rounded-full shadow-lg hover:bg-indigo-600 transition-colors" id="levels-btn">
+<span class="material-symbols-outlined text-base sm:text-lg">
+            apps
+          </span>
+</button>
+
+</div>
+<div id="timer-display" class="hidden bg-black/50 text-white text-lg sm:text-xl font-bold py-2 px-4 rounded-full shadow-lg border-2 border-transparent"></div>
+<div class="bg-gray-700 text-white text-lg sm:text-xl font-bold py-2 sm:py-3 px-6 sm:px-8 rounded-full shadow-lg">
+        Level 1
+      </div>
+<div class="bg-gray-800/50 flex items-center font-bold py-2 px-4 rounded-full shadow-lg">
+<span class="material-icons text-yellow-400 mr-2">monetization_on</span>
+<span class="text-lg sm:text-xl">0</span>
+</div>
+</header>
+<main class="flex-grow flex flex-col justify-center items-center w-full relative" id="game-area">
+  <div id="tubes-container" class="flex flex-wrap justify-center gap-2 sm:gap-4 max-w-screen-lg mx-auto px-2">
+    <!-- Tubes will be dynamically inserted here -->
+  </div>
+</main>
+<footer class="w-full flex flex-col items-center p-2 sm:p-4">
+<div class="bg-gray-800 bg-opacity-50 rounded-xl sm:rounded-2xl p-2 sm:p-3 mb-2 sm:mb-4 w-full max-w-sm flex flex-wrap sm:flex-nowrap items-center justify-between shadow-lg">
+<div class="flex items-center">
+<span class="material-icons text-yellow-400 text-2xl sm:text-3xl mr-2 sm:mr-3">lightbulb</span>
+<span class="text-lg sm:text-xl font-bold" id="hints-counter">Hints: 5</span>
+</div>
+<div class="flex items-center gap-2">
+<button class="bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-1.5 sm:py-2 px-3 sm:px-4 rounded-full text-sm sm:text-base flex items-center shadow-md transition-all hover:scale-105 active:scale-95" id="use-hint-btn">
+<span class="material-icons mr-1 text-base sm:text-lg">lightbulb</span>
+<span>Hint</span>
+</button>
+<button class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-1.5 sm:py-2 px-3 sm:px-4 rounded-full text-sm sm:text-base flex items-center shadow-md transition-all hover:scale-105 active:scale-95">
+<span class="material-icons mr-1 sm:mr-2">smart_display</span>
+<span>Watch Ad</span>
+</button>
+</div>
+</div>
+<div class="flex flex-wrap justify-center items-start gap-4">
+    <div class="flex flex-col items-center" id="undo-container">
+        <button class="bg-gray-600 p-2 sm:p-3 rounded-full shadow-lg opacity-50 cursor-not-allowed transition-all hover:scale-105 active:scale-95" id="undo-btn" disabled>
+            <span class="material-icons text-base sm:text-lg">undo</span>
+        </button>
+        <span id="undo-name" class="text-xs text-gray-400 font-bold mt-1">Undo</span>
+    </div>
+    <div class="flex flex-col items-center" id="redo-container">
+        <button class="bg-gray-600 p-2 sm:p-3 rounded-full shadow-lg opacity-50 cursor-not-allowed transition-all hover:scale-105 active:scale-95" id="redo-btn" disabled>
+            <span class="material-icons text-base sm:text-lg">redo</span>
+        </button>
+        <span id="redo-name" class="text-xs text-gray-400 font-bold mt-1">Redo</span>
+    </div>
+    <div class="flex flex-col items-center" id="reset-container">
+        <button class="bg-red-600 p-2 sm:p-3 rounded-full shadow-lg transition-all hover:scale-105 active:scale-95" id="refresh-btn">
+            <span class="material-icons text-base sm:text-lg">refresh</span>
+        </button>
+        <span id="refresh-name" class="text-xs text-gray-400 font-bold mt-1">Reset</span>
+    </div>
+    <div class="flex flex-col items-center" id="shuffle-container">
+        <button class="bg-cyan-600 p-2 sm:p-3 rounded-full shadow-lg" id="shuffle-btn" title="Unlocks at Level 10">
+            <span class="material-icons text-base sm:text-lg">shuffle</span>
+        </button>
+        <span id="shuffle-name" class="text-xs text-gray-400 font-bold mt-1">Shuffle</span>
+        <span id="shuffle-level" class="text-xs text-gray-400 font-bold hidden">Lvl 10</span>
+    </div>
+    <div class="flex flex-col items-center" id="bomb-container">
+        <button class="bg-orange-600 p-2 sm:p-3 rounded-full shadow-lg" id="bomb-btn" title="Unlocks at Level 30">
+            <span class="material-icons text-base sm:text-lg">bolt</span>
+        </button>
+        <span id="bomb-name" class="text-xs text-gray-400 font-bold mt-1">Bomb</span>
+        <span id="bomb-level" class="text-xs text-gray-400 font-bold hidden">Lvl 30</span>
+    </div>
+    <div class="flex flex-col items-center" id="add-tube-container">
+        <button class="bg-purple-600 p-2 sm:p-3 rounded-full shadow-lg transition-all hover:scale-105 active:scale-95" id="add-tube-btn" title="Unlocks at Level 50">
+            <span class="material-icons text-base sm:text-lg">add</span>
+        </button>
+        <span id="add-tube-name" class="text-xs text-gray-400 font-bold mt-1">Add Tube</span>
+        <span id="add-tube-level" class="text-xs text-gray-400 font-bold hidden">Lvl 50</span>
+    </div>
+    <div class="flex flex-col items-center" id="2x-container">
+        <button class="bg-pink-600 p-2 sm:p-3 rounded-full shadow-lg" id="2x-btn" title="Unlocks at Level 100">
+            <span class="font-bold text-base sm:text-lg">2x</span>
+        </button>
+        <span id="2x-name" class="text-xs text-gray-400 font-bold mt-1">2x Points</span>
+        <span id="2x-level" class="text-xs text-gray-400 font-bold hidden">Lvl 100</span>
+    </div>
+    <div class="flex flex-col items-center" id="5x-container">
+        <button class="bg-yellow-600 p-2 sm:p-3 rounded-full shadow-lg" id="5x-btn" title="Unlocks at Level 150">
+            <span class="font-bold text-base sm:text-lg">5x</span>
+        </button>
+        <span id="5x-name" class="text-xs text-gray-400 font-bold mt-1">5x Points</span>
+        <span id="5x-level" class="text-xs text-gray-400 font-bold hidden">Lvl 150</span>
+    </div>
+</div>
+</footer>
+</div>
+<div class="hidden fixed inset-0 popup-bg flex items-center justify-center p-4" id="level-complete-popup">
+<div class="bg-gray-800 rounded-xl sm:rounded-2xl p-6 sm:p-8 text-white text-center w-full max-w-sm sm:w-96 shadow-2xl border-4 border-yellow-400">
+<h2 class="text-3xl sm:text-4xl font-bold mb-3 sm:mb-4 text-yellow-400">Congratulations!</h2>
+<p class="text-base sm:text-lg mb-2">Level Complete</p>
+<p class="text-xl sm:text-2xl font-bold mb-3 sm:mb-4" id="level-score">Score: 0</p>
+
+<button class="bg-green-500 hover:bg-green-600 text-white font-bold py-2.5 sm:py-3 px-6 sm:px-8 rounded-full text-lg sm:text-xl transition-all hover:scale-105 active:scale-95">
+        Next Level
+      </button>
+</div>
+</div>
+<div class="hidden fixed inset-0 popup-bg flex items-center justify-center backdrop-blur-sm p-4" id="settings-popup">
+<div class="popup-card w-full max-w-md rounded-2xl sm:rounded-3xl p-4 sm:p-6 border-2 border-teal-400/30 relative">
+<button class="absolute top-3 sm:top-4 right-3 sm:right-4 text-gray-400 hover:text-white transition-colors" id="close-settings-btn">
+<span class="material-icons text-2xl sm:text-3xl">close</span>
+</button>
+<h2 class="text-3xl sm:text-4xl font-bold text-center mb-4 sm:mb-6 text-teal-300" style="text-shadow: 0 0 8px #2dd4bf;">Settings</h2>
+<div class="space-y-4 sm:space-y-6">
+<div class="flex items-center justify-between p-3 sm:p-4 rounded-lg sm:rounded-xl bg-black/20 border border-white/10">
+<span class="text-lg sm:text-xl font-semibold text-cyan-200 flex items-center">
+<span class="material-icons mr-2 sm:mr-3 text-cyan-300">music_note</span>
+Music
+</span>
+<label class="switch">
+<input type="checkbox" id="music-toggle" checked/>
+<span class="slider"></span>
+</label>
+</div>
+<div class="flex items-center justify-between p-3 sm:p-4 rounded-lg sm:rounded-xl bg-black/20 border border-white/10">
+<span class="text-lg sm:text-xl font-semibold text-cyan-200 flex items-center">
+<span class="material-icons mr-2 sm:mr-3 text-cyan-300">volume_up</span>
+Sound FX
+</span>
+<label class="switch">
+<input type="checkbox" id="sound-toggle" checked/>
+<span class="slider"></span>
+</label>
+</div>
+<div class="grid grid-cols-2 gap-3 sm:gap-4">
+<a class="flex items-center justify-center py-2.5 sm:py-3 px-3 sm:px-4 rounded-lg sm:rounded-xl bg-black/20 hover:bg-black/40 border border-white/10 transition-all duration-300 transform hover:-translate-y-1 text-white text-sm sm:text-base" href="https://shorturl.at/AcJMF" target="_blank">
+<span class="material-icons mr-1.5 sm:mr-2 text-pink-400">shield</span>
+<span class="font-medium">Privacy Policy</span>
+</a>
+<a class="flex items-center justify-center py-2.5 sm:py-3 px-3 sm:px-4 rounded-lg sm:rounded-xl bg-black/20 hover:bg-black/40 border border-white/10 transition-all duration-300 transform hover:-translate-y-1 text-white text-sm sm:text-base" href="https://shorturl.at/MPNDf" target="_blank">
+<span class="material-icons mr-1.5 sm:mr-2 text-yellow-400">gavel</span>
+<span class="font-medium">Disclaimer</span>
+</a>
+<a class="flex items-center justify-center py-2.5 sm:py-3 px-3 sm:px-4 rounded-lg sm:rounded-xl bg-black/20 hover:bg-black/40 border border-white/10 transition-all duration-300 transform hover:-translate-y-1 text-white text-sm sm:text-base" href="https://shorturl.at/rsFli" target="_blank">
+<span class="material-icons mr-1.5 sm:mr-2 text-green-400">email</span>
+<span class="font-medium">Contact Us</span>
+</a>
+</a>
+<a class="flex items-center justify-center py-2.5 sm:py-3 px-3 sm:px-4 rounded-lg sm:rounded-xl bg-black/20 hover:bg-black/40 border border-white/10 transition-all duration-300 transform hover:-translate-y-1 text-white text-sm sm:text-base" href="https://shorturl.at/joWCM" target="_blank">
+<span class="material-icons mr-1.5 sm:mr-2 text-green-400">email</span>
+<span class="font-medium">About Us</span>
+</a>
+<button id="share-btn" class="flex items-center justify-center py-2.5 sm:py-3 px-3 sm:px-4 rounded-lg sm:rounded-xl bg-black/20 hover:bg-black/40 border border-white/10 transition-all duration-300 transform hover:-translate-y-1 text-white text-sm sm:text-base w-full">
+<span class="material-icons mr-1.5 sm:mr-2 text-blue-400">share</span>
+<span class="font-medium" id="share-btn-text">Share</span>
+</button>
+</div>
+</div>
+<div class="text-center mt-4 sm:mt-6 text-gray-500 font-medium text-sm sm:text-base">
+Version 1.9
+</div>
+</div>
+</div>
+<div class="hidden fixed inset-0 popup-bg flex items-center justify-center p-4" id="hint-ad-choice-popup">
+<div class="bg-gray-800 rounded-xl sm:rounded-2xl p-6 sm:p-8 text-white text-center w-full max-w-sm sm:w-96 shadow-2xl relative">
+<button class="absolute top-2 right-2 text-gray-400 hover:text-white transition-colors" id="close-hint-ad-choice-btn">
+<span class="material-icons text-xl sm:text-2xl">close</span>
+</button>
+<h2 class="text-2xl sm:text-3xl font-bold mb-3 sm:mb-4">Get a Hint</h2>
+<p class="text-base sm:text-lg mb-4 sm:mb-6">You have <span class="font-bold text-yellow-400">5</span> free hints remaining.</p>
+<button class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2.5 sm:py-3 px-6 sm:px-8 rounded-full text-lg sm:text-xl flex items-center justify-center w-full mb-2 sm:mb-3 transition-all hover:scale-105 active:scale-95">
+        <span class="material-icons mr-2">lightbulb</span> Use a Hint
+    </button>
+    <button id="swap-top-emojis-btn" class="bg-amber-500 hover:bg-amber-600 text-white font-bold py-2.5 sm:py-3 px-6 sm:px-8 rounded-full text-lg sm:text-xl flex items-center justify-center w-full mb-2 sm:mb-3 transition-all hover:scale-105 active:scale-95">
+        <span class="material-icons mr-2">swap_vert</span> Swap Top Emojis
+    </button>
+    <button class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2.5 sm:py-3 px-6 sm:px-8 rounded-full text-lg sm:text-xl flex items-center justify-center w-full transition-all hover:scale-105 active:scale-95">
+        <span class="material-icons mr-2">smart_display</span> Watch Ad for Hint
+    </button>
+</div>
+</div>
+<div class="hidden fixed inset-0 popup-bg flex items-center justify-center" id="levels-popup">
+<div class="bg-gray-900/95 backdrop-blur-sm rounded-3xl p-6 text-white w-[90vw] max-w-4xl max-h-[85vh] shadow-2xl relative border border-gray-700/50">
+<button class="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors" id="close-levels-btn">
+<span class="material-icons text-3xl">close</span>
+</button>
+<h2 class="text-4xl font-bold mb-6 text-center text-teal-400 tracking-wider" style="text-shadow: 0 0 10px #2dd4bf;">SELECT LEVEL</h2>
+<div class="h-[60vh] overflow-y-auto pr-2 -mr-2 scrollbar-hide">
+<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+
+<!-- Level 1 - Current Level -->
+<div class="level-card current rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer ring-4 ring-teal-400 animate-pulse" data-level="1">
+<span class="text-4xl font-bold text-white mb-3">1</span>
+<div class="flex">
+<span class="material-icons text-gray-300 text-xl">star_border</span>
+<span class="material-icons text-gray-300 text-xl">star_border</span>
+<span class="material-icons text-gray-300 text-xl">star_border</span>
+</div>
+</div>
+
+<!-- Level 2 - Locked -->
+<div class="level-card locked rounded-2xl p-6 flex flex-col items-center justify-center text-center" data-level="2">
+<span class="material-icons text-gray-500 text-5xl mb-2 opacity-50">lock</span>
+<span class="text-2xl font-bold text-gray-600 mb-3">2</span>
+<button class="unlock-btn text-black font-bold py-2 px-4 rounded-full flex items-center text-sm shadow-lg">
+<span class="material-icons text-sm mr-1">monetization_on</span>
+<span>50</span>
+</button>
+</div>
+
+<!-- Level 3 - Locked -->
+<div class="level-card locked rounded-2xl p-6 flex flex-col items-center justify-center text-center" data-level="3">
+<span class="material-icons text-gray-500 text-5xl mb-2 opacity-50">lock</span>
+<span class="text-2xl font-bold text-gray-600 mb-3">3</span>
+<button class="unlock-btn text-black font-bold py-2 px-4 rounded-full flex items-center text-sm shadow-lg">
+<span class="material-icons text-sm mr-1">monetization_on</span>
+<span>50</span>
+</button>
+</div>
+
+<!-- Locked Levels 4-15 -->
+<div class="level-card locked rounded-2xl p-6 flex flex-col items-center justify-center text-center" data-level="4">
+<span class="material-icons text-gray-500 text-5xl mb-2 opacity-50">lock</span>
+<span class="text-2xl font-bold text-gray-600 mb-3">4</span>
+<button class="unlock-btn text-black font-bold py-2 px-4 rounded-full flex items-center text-sm shadow-lg">
+<span class="material-icons text-sm mr-1">monetization_on</span>
+<span>50</span>
+</button>
+</div>
+
+<div class="level-card locked rounded-2xl p-6 flex flex-col items-center justify-center text-center" data-level="5">
+<span class="material-icons text-gray-500 text-5xl mb-2 opacity-50">lock</span>
+<span class="text-2xl font-bold text-gray-600 mb-3">5</span>
+<button class="unlock-btn text-black font-bold py-2 px-4 rounded-full flex items-center text-sm shadow-lg">
+<span class="material-icons text-sm mr-1">monetization_on</span>
+<span>50</span>
+</button>
+</div>
+
+<div class="level-card locked rounded-2xl p-6 flex flex-col items-center justify-center text-center" data-level="6">
+<span class="material-icons text-gray-500 text-5xl mb-2 opacity-50">lock</span>
+<span class="text-2xl font-bold text-gray-600 mb-3">6</span>
+<button class="unlock-btn text-black font-bold py-2 px-4 rounded-full flex items-center text-sm shadow-lg">
+<span class="material-icons text-sm mr-1">monetization_on</span>
+<span>50</span>
+</button>
+</div>
+
+<div class="level-card locked rounded-2xl p-6 flex flex-col items-center justify-center text-center" data-level="7">
+<span class="material-icons text-gray-500 text-5xl mb-2 opacity-50">lock</span>
+<span class="text-2xl font-bold text-gray-600 mb-3">7</span>
+<button class="unlock-btn text-black font-bold py-2 px-4 rounded-full flex items-center text-sm shadow-lg">
+<span class="material-icons text-sm mr-1">monetization_on</span>
+<span>50</span>
+</button>
+</div>
+
+<div class="level-card locked rounded-2xl p-6 flex flex-col items-center justify-center text-center" data-level="8">
+<span class="material-icons text-gray-500 text-5xl mb-2 opacity-50">lock</span>
+<span class="text-2xl font-bold text-gray-600 mb-3">8</span>
+<button class="unlock-btn text-black font-bold py-2 px-4 rounded-full flex items-center text-sm shadow-lg">
+<span class="material-icons text-sm mr-1">monetization_on</span>
+<span>50</span>
+</button>
+</div>
+
+<div class="level-card locked rounded-2xl p-6 flex flex-col items-center justify-center text-center" data-level="9">
+<span class="material-icons text-gray-500 text-5xl mb-2 opacity-50">lock</span>
+<span class="text-2xl font-bold text-gray-600 mb-3">9</span>
+<button class="unlock-btn text-black font-bold py-2 px-4 rounded-full flex items-center text-sm shadow-lg">
+<span class="material-icons text-sm mr-1">monetization_on</span>
+<span>200</span>
+</button>
+</div>
+
+<div class="level-card locked rounded-2xl p-6 flex flex-col items-center justify-center text-center" data-level="10">
+<span class="material-icons text-gray-500 text-5xl mb-2 opacity-50">lock</span>
+<span class="text-2xl font-bold text-gray-600 mb-3">10</span>
+<button class="unlock-btn text-black font-bold py-2 px-4 rounded-full flex items-center text-sm shadow-lg">
+<span class="material-icons text-sm mr-1">monetization_on</span>
+<span>200</span>
+</button>
+</div>
+
+<div class="level-card locked rounded-2xl p-6 flex flex-col items-center justify-center text-center" data-level="11">
+<span class="material-icons text-gray-500 text-5xl mb-2 opacity-50">lock</span>
+<span class="text-2xl font-bold text-gray-600 mb-3">11</span>
+<button class="unlock-btn text-black font-bold py-2 px-4 rounded-full flex items-center text-sm shadow-lg">
+<span class="material-icons text-sm mr-1">monetization_on</span>
+<span>250</span>
+</button>
+</div>
+
+<div class="level-card locked rounded-2xl p-6 flex flex-col items-center justify-center text-center" data-level="12">
+<span class="material-icons text-gray-500 text-5xl mb-2 opacity-50">lock</span>
+<span class="text-2xl font-bold text-gray-600 mb-3">12</span>
+<button class="unlock-btn text-black font-bold py-2 px-4 rounded-full flex items-center text-sm shadow-lg">
+<span class="material-icons text-sm mr-1">monetization_on</span>
+<span>250</span>
+</button>
+</div>
+
+</div>
+</div>
+</div>
+</div>
+
+<!-- Out of Hints Popup -->
+<div class="hidden fixed inset-0 popup-bg flex items-center justify-center p-4 z-[10001]" id="out-of-hints-popup">
+    <div class="popup-card w-full max-w-sm rounded-2xl p-6 text-center border-2 border-yellow-400/30 relative animate-zoomIn">
+        <button class="absolute top-3 right-3 text-gray-400 hover:text-white transition-colors" id="close-out-of-hints-btn">
+            <span class="material-icons text-2xl">close</span>
+        </button>
+        <h2 class="text-3xl font-bold text-center mb-4 text-yellow-300">Out of Hints!</h2>
+        <p class="text-lg mb-6">You have 0 hints left. Watch an ad to earn more hints!</p>
+        <button id="popup-watch-ad-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-full text-lg flex items-center justify-center w-full transition-all hover:scale-105 active:scale-95">
+            <span class="material-icons mr-2">smart_display</span> Watch Ad
+        </button>
+    </div>
+</div>
+
+<script>
+    // Audio elements and settings
+    const backgroundMusic = new Audio();
+    backgroundMusic.src = 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBzuR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBjiN1fLPfS4H';
+    backgroundMusic.loop = true;
+    backgroundMusic.volume = 0.3;
+    
+    const clickSound = new Audio();
+    clickSound.src = 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBzuR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBjiN1fLPfS4H';
+    clickSound.volume = 0.5;
+    
+    const successSound = new Audio();
+    successSound.src = 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBzuR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBjiN1fLPfS4H';
+    successSound.volume = 0.7;
+    
+    const errorSound = new Audio();
+    errorSound.src = 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBzuR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBjiN1fLPfS4H';
+    errorSound.volume = 0.6;
+    
+    // Game State Management - Separate systems for moves and hints
+    let selectedBall = null;
+    let selectedTube = null;
+    let gameState = [];
+    let moveHistory = []; // Only stores ball movement history
+    let redoHistory = []; // Stores undone moves for redo functionality
+    let hintsRemaining = 10; // Initial hints balance
+    let currentLevel = 1;
+    let playerPoints = 0; // Starting points - zero when first time user starts game
+    let unlockedLevels = 1; // Only level 1 unlocked initially
+    let hasMoved = false; // Track if user has made any moves
+    let levelStartTime = Date.now();
+    let moveCount = 0;
+    let bombMode = false;
+    let bombUsedThisLevel = false;
+    let shuffleMode = false;
+    let shuffleUsedThisLevel = false;
+    let is2xModeActive = false;
+    let is2xUsedThisLevel = false;
+    let is5xModeActive = false;
+    let is5xUsedThisLevel = false;
+    let timerInterval = null;
+    let timeLeft = 0;
+    let isSharing = false; // Flag for share API
+    
+    // Level Configuration System
+    const ALL_COLORS = ['red', 'green', 'blue', 'yellow', 'pink', 'purple', 'orange', 'cyan', 'lime'];
+    const levelConfigs = {
+        1: { tubes: 2, colors: ['red'], distribution: [4] },
+        2: { tubes: 3, colors: ['blue', 'green'], distribution: [4, 4] },
+        3: { tubes: 4, colors: ['red', 'blue'], distribution: [4, 4] }, // Adjusted for 2 colors + 2 empty
+        4: { tubes: 4, colors: ['red', 'blue', 'green'], distribution: [4, 4, 4] },
+        5: { tubes: 5, colors: ['red', 'blue', 'green', 'yellow'], distribution: [4, 4, 4, 4] },
+        6: { tubes: 5, colors: ['red', 'blue', 'green', 'yellow'], distribution: [4, 4, 4, 4] },
+        7: { tubes: 6, colors: ['red', 'blue', 'green', 'yellow', 'pink'], distribution: [4, 4, 4, 4, 4] },
+        8: { tubes: 6, colors: ['red', 'blue', 'green', 'yellow', 'pink'], distribution: [4, 4, 4, 4, 4] },
+        9: { tubes: 7, colors: ['red', 'blue', 'green', 'yellow', 'pink', 'purple'], distribution: [4, 4, 4, 4, 4, 4] },
+        10: { tubes: 7, colors: ['red', 'blue', 'green', 'yellow', 'pink', 'purple'], distribution: [4, 4, 4, 4, 4, 4] },
+        11: { tubes: 7, colors: ['red', 'blue', 'green', 'yellow', 'pink', 'purple'], distribution: [4, 4, 4, 4, 4, 4] },
+        12: { tubes: 8, colors: ['red', 'blue', 'green', 'yellow', 'pink', 'purple', 'orange'], distribution: [4, 4, 4, 4, 4, 4, 4] },
+        getConfig: function(level) {
+            if (level <= 12) {
+                return this[level];
+            }
+            
+            // --- Dynamic Generation for levels > 12 ---
+            const baseLevel = 12;
+            const levelDiff = level - baseLevel;
+
+            // Determine number of colors (starts at 7, max 9)
+            const numColors = Math.min(ALL_COLORS.length, 7 + Math.floor(levelDiff / 10)); // Add color every 10 levels
+
+            // Determine number of tubes (starts at 8, max 11)
+            // Always numColors + 1 empty tube
+            const numTubes = Math.min(11, numColors + 1);
+
+            const colors = ALL_COLORS.slice(0, numColors);
+            const distribution = Array(numColors).fill(4); // Always 4 balls per color
+
+            return { tubes: numTubes, colors: colors, distribution: distribution };
+        }
+    };
+    
+    // Initialize game state from level config
+    function initializeGameState() {
+        moveHistory = [];
+        redoHistory = [];
+        moveCount = 0;
+        hasMoved = false;
+        selectedTube = null;
+        bombUsedThisLevel = false;
+        bombMode = false;
+        shuffleUsedThisLevel = false;
+        shuffleMode = false;
+        is2xUsedThisLevel = false;
+        is2xModeActive = false;
+        is5xUsedThisLevel = false;
+        is5xModeActive = false;
+
+        generateLevelFromConfig(currentLevel); // Always generate based on config
+        
+        // Update displays
+        updateHintDisplay();
+        updateUndoRedoButtons();
+        updateFeatureButtonStates(); // Combined update function
+    }
+    
+    // Generate level from configuration
+    function generateLevelFromConfig(level) {
+        const config = levelConfigs.getConfig(level);
+        if (!config) {
+             console.error(`No config found for level ${level}`);
+             // Maybe default to level 1 or show an error?
+             return;
+        }
+
+        const numTubes = config.tubes;
+        const numColors = config.colors.length;
+        const emptyTubesCount = numTubes - numColors;
+
+        let attempts = 0;
+        const maxAttempts = 20; // Prevent infinite loops
+
+        do {
+            gameState = Array(numTubes).fill(null).map(() => []);
+            const allBalls = [];
+            config.colors.forEach(color => {
+                for (let i = 0; i < 4; i++) { allBalls.push(color); }
+            });
+
+            // Fisher-Yates shuffle
+            for (let i = allBalls.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [allBalls[i], allBalls[j]] = [allBalls[j], allBalls[i]];
+            }
+
+            // Distribute balls into the non-empty tubes
+            let ballIndex = 0;
+            for (let tubeIndex = 0; tubeIndex < numColors; tubeIndex++) { // Only fill numColors tubes
+                for (let i = 0; i < 4; i++) {
+                    if (ballIndex < allBalls.length) {
+                        gameState[tubeIndex].push(allBalls[ballIndex++]);
+                    }
+                }
+            }
+             attempts++;
+        // Retry if the generated level starts completed (unlikely with good shuffle but possible)
+        } while (checkLevelComplete() && attempts < maxAttempts);
+
+        if (attempts >= maxAttempts) {
+             console.warn(`Could not generate a non-solved state for level ${level} after ${maxAttempts} attempts.`);
+             // Potentially force a specific known difficult shuffle pattern here if needed
+        }
+
+        updateGameDisplay();
+    }
+    
+    // Update the entire game display
+    function updateGameDisplay() {
+        const tubesContainer = document.getElementById('tubes-container');
+        tubesContainer.innerHTML = ''; // Clear previous tubes
+    
+        gameState.forEach((tubeData, tubeIndex) => {
+            const tubeElement = document.createElement('div');
+            tubeElement.className = 'tube';
+            tubesContainer.appendChild(tubeElement);
+        });
+    
+        // Update all tube displays with balls
+        gameState.forEach((tubeData, tubeIndex) => {
+            updateTubeDisplay(tubeIndex);
+        });
+    
+        // Re-add tube click and swipe handlers
+        addTubeInteractionHandlers();
+    }
+    
+    // Ball Movement Logic - Now allows any ball on any ball
+    function canMoveBall(fromTubeIndex, toTubeIndex) {
+        const fromTube = gameState[fromTubeIndex];
+        const toTube = gameState[toTubeIndex];
+        
+        // Can't move from empty tube
+        if (!fromTube || fromTube.length === 0) return false;
+        
+        // Can't move to the same tube
+        if (fromTubeIndex === toTubeIndex) return false;
+        
+        // Can't move to a full tube (max 4 balls)
+        if (!toTube || toTube.length >= 4) return false;
+        
+        // If checks pass, the move is valid (color doesn't matter)
+        return true;
+    }
+    
+    function moveBall(fromTubeIndex, toTubeIndex) {
+        if (!canMoveBall(fromTubeIndex, toTubeIndex)) return false;
+        
+        redoHistory = [];
+        moveHistory.push({ from: fromTubeIndex, to: toTubeIndex });
+        
+        const fromTubeEl = document.querySelectorAll('.tube')[fromTubeIndex];
+        const toTubeEl = document.querySelectorAll('.tube')[toTubeIndex];
+        const movingBallEl = fromTubeEl?.lastElementChild; // Use optional chaining
+        
+        if (!movingBallEl) return false;
+        
+        const ballColor = movingBallEl.className.split(' ').find(cls => cls.startsWith('ball-'));
+        const tempBall = document.createElement('div');
+        tempBall.className = `ball ${ballColor} moving`;
+        document.body.appendChild(tempBall);
+        
+        const fromRect = movingBallEl.getBoundingClientRect();
+        const toRect = toTubeEl.getBoundingClientRect();
+        const startX = fromRect.left;
+        const startY = fromRect.top;
+        const endX = toRect.left + (toRect.width - fromRect.width) / 2;
+        // Ensure gameState[toTubeIndex] exists before accessing length
+        const targetTubeLength = gameState[toTubeIndex] ? gameState[toTubeIndex].length : 0;
+        const endY = toRect.top + toRect.height - fromRect.height - (targetTubeLength * (fromRect.height + 2));
+        
+        tempBall.style.position = 'fixed';
+        tempBall.style.left = startX + 'px';
+        tempBall.style.top = startY + 'px';
+        tempBall.style.width = fromRect.width + 'px';
+        tempBall.style.height = fromRect.height + 'px';
+        
+        const keyframes = [
+            { left: startX + 'px', top: startY + 'px', transform: 'scale(1)', offset: 0 },
+            { left: (startX + endX) / 2 + 'px', top: Math.min(startY, endY) - 50 + 'px', transform: 'scale(1.2)', offset: 0.5 },
+            { left: endX + 'px', top: endY + 'px', transform: 'scale(1)', offset: 1 }
+        ];
+        
+        const options = { duration: 500, easing: 'cubic-bezier(0.4, 0, 0.2, 1)', fill: 'forwards' };
+        
+        movingBallEl.style.opacity = '0';
+        
+        const animation = tempBall.animate(keyframes, options);
+        
+        animation.onfinish = () => {
+            tempBall.remove();
+            
+            // Ensure gameState[fromTubeIndex] exists before popping
+             if (gameState[fromTubeIndex]) {
+                 const ball = gameState[fromTubeIndex].pop();
+                 // Ensure gameState[toTubeIndex] exists before pushing
+                 if (gameState[toTubeIndex]) {
+                    gameState[toTubeIndex].push(ball);
+                 } else {
+                      console.error(`Target tube ${toTubeIndex} is undefined in gameState`);
+                      // Potentially revert the move or handle the error
+                 }
+             } else {
+                 console.error(`Source tube ${fromTubeIndex} is undefined in gameState`);
+                  // Handle error state
+             }
+            
+            updateTubeDisplay(fromTubeIndex);
+            updateTubeDisplay(toTubeIndex);
+            
+            moveCount++;
+            if (!hasMoved) {
+                hasMoved = true;
+                updateUndoRedoButtons();
+            }
+            
+            playBallMoveSound();
+            
+            if (checkLevelComplete()) {
+                setTimeout(showLevelCompletePopup, 500);
+            }
+        };
+        
+        return true;
+    }
+    
+    function updateTubeDisplay(tubeIndex) {
+        const tube = document.querySelectorAll('.tube')[tubeIndex];
+        if (!tube || !gameState[tubeIndex]) return; // Add checks
+        const balls = gameState[tubeIndex];
+        
+        tube.innerHTML = '';
+        
+        balls.forEach(color => {
+            const ballElement = document.createElement('div');
+            ballElement.className = `ball ball-${color}`;
+            tube.appendChild(ballElement);
+        });
+    }
+
+    // New function to swap top two balls in a tube
+    function swapTopTwoBallsInTube(tubeIndex) {
+         if (!gameState[tubeIndex]) return; // Add check
+        const tubeData = gameState[tubeIndex];
+
+        if (tubeData.length < 2) return;
+        if (hintsRemaining < 1) {
+            if (hintsRemaining <= 0) {
+                showOutOfHintsPopup();
+            } else {
+                showCustomMessage("You need at least 1 hint to swap balls.");
+            }
+            playHintSound();
+            return;
+        }
+
+        hintsRemaining--;
+        updateHintDisplay();
+
+        const topBall = tubeData[tubeData.length - 1];
+        const secondBall = tubeData[tubeData.length - 2];
+        tubeData[tubeData.length - 1] = secondBall;
+        tubeData[tubeData.length - 2] = topBall;
+
+        const tubeElement = document.querySelectorAll('.tube')[tubeIndex];
+        const ballElements = tubeElement?.querySelectorAll('.ball'); // Use optional chaining
+        if (ballElements && ballElements.length >= 2) {
+            const topBallElement = ballElements[ballElements.length - 1];
+            const secondBallElement = ballElements[ballElements.length - 2];
+            
+            topBallElement.style.transition = 'transform 0.3s ease';
+            secondBallElement.style.transition = 'transform 0.3s ease';
+            
+            const ballHeight = topBallElement.offsetHeight + 2; // Including margin
+            topBallElement.style.transform = `translateY(${ballHeight}px)`;
+            secondBallElement.style.transform = `translateY(-${ballHeight}px)`;
+
+             setTimeout(() => {
+                 // Ensure styles are reset after animation if needed
+                 topBallElement.style.transition = '';
+                 secondBallElement.style.transition = '';
+                 topBallElement.style.transform = '';
+                 secondBallElement.style.transform = '';
+                 updateTubeDisplay(tubeIndex); // Redraw after styles reset
+            }, 300);
+        } else {
+             // If elements not found, just redraw immediately
+            updateTubeDisplay(tubeIndex);
+        }
+
+
+        playBallMoveSound();
+        saveGameProgress();
+    }
+    
+    // Ball Click Handler - Updated to handle tube clicks properly
+    function handleBallClick(tubeIndex) {
+        if (bombMode) {
+            useBombOnTube(tubeIndex);
+            return;
+        }
+
+        if (shuffleMode) {
+            shuffleTube(tubeIndex);
+            return;
+        }
+         if (!gameState[tubeIndex]) return; // Add check
+        const tube = gameState[tubeIndex];
+        
+        if (selectedTube === null) {
+            // Can only select a tube with balls
+            if (tube.length > 0) {
+                 selectedTube = tubeIndex;
+                 highlightTube(tubeIndex, true);
+                 playHintSound();
+            } else {
+                playHintSound(); // Play sound even for invalid selection
+            }
+        } else {
+            if (selectedTube === tubeIndex) {
+                highlightTube(selectedTube, false);
+                selectedTube = null;
+            } else {
+                const success = moveBall(selectedTube, tubeIndex);
+                if (success) {
+                    highlightTube(selectedTube, false);
+                    selectedTube = null;
+                } else {
+                    playHintSound();
+                    showInvalidMoveAnimation(tubeIndex);
+                    // Option: Deselect source tube on invalid move?
+                    // highlightTube(selectedTube, false);
+                    // selectedTube = null;
+                }
+            }
+        }
+    }
+    
+    // Add tube click and swipe handlers
+    function addTubeInteractionHandlers() {
+        const tubes = document.querySelectorAll('.tube');
+        tubes.forEach((tube, tubeIndex) => {
+            // --- Clean up old listeners by cloning ---
+            const newTube = tube.cloneNode(true);
+            tube.parentNode.replaceChild(newTube, tube);
+            newTube.style.cursor = 'pointer';
+            // --- End clean up ---
+
+            let startY = 0;
+            let startTime = 0;
+            let startX = 0; // Added for better swipe detection
+            let touchMoved = false; // Flag to track movement
+
+            const handleInteractionStart = (x, y) => {
+                startX = x;
+                startY = y;
+                startTime = Date.now();
+                touchMoved = false; // Reset move flag
+            };
+
+            const handleInteractionMove = (x, y) => {
+                // Check if movement exceeds a threshold (e.g., 10px in any direction)
+                if (Math.abs(x - startX) > 10 || Math.abs(y - startY) > 10) {
+                    touchMoved = true; // Mark as moved (likely swipe)
+                }
+            };
+
+            const handleInteractionEnd = (y) => {
+                const endY = y;
+                const deltaTime = Date.now() - startTime;
+                const deltaY = endY - startY;
+
+                // Only trigger swipe if movement occurred and meets criteria
+                if (touchMoved && deltaY > 50 && deltaTime < 500) { // Significant downward swipe within 500ms
+                    swapTopTwoBallsInTube(tubeIndex);
+                }
+                // Click logic is now handled by the separate 'click' listener
+            };
+
+            // --- Explicit Click Listener ---
+            newTube.addEventListener('click', (e) => {
+                 // Prevent click if a significant swipe just happened
+                if (touchMoved && (Date.now() - startTime < 500)) {
+                    return;
+                }
+                // Determine action based on current mode
+                 if (bombMode) {
+                    useBombOnTube(tubeIndex);
+                } else if (shuffleMode) {
+                    shuffleTube(tubeIndex);
+                } else if (swapMode) {
+                     swapTopEmojis(tubeIndex);
+                } else {
+                     handleBallClick(tubeIndex);
+                }
+            });
+            // --- End Click Listener ---
+
+
+            // --- Existing Touch/Mouse Listeners (primarily for swipe) ---
+            // Mouse events
+            newTube.addEventListener('mousedown', (e) => handleInteractionStart(e.clientX, e.clientY));
+            newTube.addEventListener('mousemove', (e) => {
+                if (e.buttons === 1) handleInteractionMove(e.clientX, e.clientY);
+            });
+            newTube.addEventListener('mouseup', (e) => handleInteractionEnd(e.clientY));
+
+            // Touch events
+            newTube.addEventListener('touchstart', (e) => {
+                 if (e.touches.length === 1) { // Ensure only one finger
+                    handleInteractionStart(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+                 }
+            }, { passive: true });
+            newTube.addEventListener('touchmove', (e) => {
+                 if (e.touches.length === 1) { // Ensure only one finger
+                     handleInteractionMove(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+                 }
+            }, { passive: true });
+            newTube.addEventListener('touchend', (e) => {
+                 if (e.changedTouches.length === 1) { // Ensure only one finger released
+                     handleInteractionEnd(e.changedTouches[0].clientY);
+                 }
+             });
+            // --- End Existing Listeners ---
+        });
+    }
+    
+    // Visual Feedback
+    function highlightTube(tubeIndex, highlight) {
+        const tube = document.querySelectorAll('.tube')[tubeIndex];
+        if(!tube) return;
+        if (highlight) {
+            tube.style.borderColor = '#fbbf24';
+            tube.style.borderWidth = '6px';
+            tube.style.boxShadow = '0 0 20px rgba(251, 191, 36, 0.5)';
+        } else {
+            tube.style.borderColor = 'rgba(255, 255, 255, 0.5)';
+            tube.style.borderWidth = '4px';
+            tube.style.boxShadow = 'none';
+        }
+    }
+    
+    function showInvalidMoveAnimation(tubeIndex) {
+        const tube = document.querySelectorAll('.tube')[tubeIndex];
+        tube.style.animation = 'shake 0.5s';
+        setTimeout(() => {
+            tube.style.animation = '';
+        }, 500);
+    }
+    
+    // Level Completion Check - More robust logic
+    function checkLevelComplete() {
+        for (const tube of gameState) {
+            // A tube can be empty, or it must be full and sorted.
+            if (!tube) continue; // Skip if tube somehow becomes undefined
+            if (tube.length > 0 && tube.length < 4) {
+                return false; // Any partially filled tube means not complete.
+            }
+            if (tube.length === 4) {
+                const firstColor = tube[0];
+                if (!tube.every(ball => ball === firstColor)) {
+                    return false; // Tube is full but with mixed colors.
+                }
+            }
+        }
+        // If we've looped through all tubes and haven't returned false, it means all tubes are either empty or sorted.
+        return true;
+    }
+    
+    // Calculate level completion points based on moves used
+    function calculateLevelPoints() {
+        const config = levelConfigs.getConfig(currentLevel);
+        if (!config) {
+            console.error('❌ Invalid level config for level', currentLevel);
+            return 0;
+        }
+        
+        // Base points is 50
+        const basePoints = 50;
+        
+        // Calculate points deduction based on moves
+        const pointsDeduction = Math.min(40, moveCount); // Maximum deduction is 40 points
+        const earnedPoints = Math.max(10, basePoints - pointsDeduction); // Minimum points is 10
+        
+        console.log(`📊 Points calculation:
+            - Base points: ${basePoints}
+            - Moves used: ${moveCount}
+            - Points deduction: -${pointsDeduction}
+            - Final points: ${earnedPoints}`);
+        
+        return earnedPoints;
+    }
+    
+    // Add amazing level completion effects
+    function addLevelCompleteEffects() {
+        // Confetti effect
+        createConfetti();
+        
+        // Tube celebration animation
+        const tubes = document.querySelectorAll('.tube');
+        tubes.forEach((tube, index) => {
+            setTimeout(() => {
+                tube.classList.add('celebration-effect');
+                setTimeout(() => tube.classList.remove('celebration-effect'), 600);
+            }, index * 100);
+        });
+        
+        // Rainbow effect on balls
+        const balls = document.querySelectorAll('.ball');
+        balls.forEach(ball => {
+            ball.classList.add('rainbow-effect');
+            setTimeout(() => ball.classList.remove('rainbow-effect'), 2000);
+        });
+        
+        // Points floating animation
+        showFloatingPoints();
+    }
+    
+    // Create confetti particles
+    function createConfetti() {
+        const colors = ['#f39c12', '#e74c3c', '#3498db', '#2ecc71', '#9b59b6', '#f1c40f'];
+        
+        for (let i = 0; i < 50; i++) {
+            setTimeout(() => {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti-piece';
+                confetti.style.left = Math.random() * 100 + 'vw';
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.animationDelay = Math.random() * 2 + 's';
+                confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                
+                document.body.appendChild(confetti);
+                
+                // Remove confetti after animation
+                setTimeout(() => {
+                    if (confetti.parentNode) {
+                        confetti.parentNode.removeChild(confetti);
+                    }
+                }, 4000);
+            }, i * 50);
+        }
+    }
+    
+    // Show floating points animation
+    function showFloatingPoints() {
+        const points = calculateLevelPoints();
+        const gameArea = document.getElementById('game-area');
+        const rect = gameArea.getBoundingClientRect();
+        
+        const pointsElement = document.createElement('div');
+        pointsElement.className = 'points-float';
+        pointsElement.textContent = `+${points} Points!`;
+        pointsElement.style.left = (rect.left + rect.width / 2 - 50) + 'px';
+        pointsElement.style.top = (rect.top + rect.height / 2) + 'px';
+        
+        document.body.appendChild(pointsElement);
+        
+        setTimeout(() => {
+            if (pointsElement.parentNode) {
+                pointsElement.parentNode.removeChild(pointsElement);
+            }
+        }, 2000);
+    }
+    
+    // Start next level
+    function startNextLevel() {
+        if (currentLevel < 10010) {
+            const previousLevel = currentLevel;
+            currentLevel++;
+            
+            console.log(`🎮 Starting Level ${currentLevel} (was Level ${previousLevel})`);
+            
+            // Update current level display in header with validation
+            const levelDisplay = document.querySelector('header .bg-gray-700');
+            if (levelDisplay) {
+                levelDisplay.textContent = `Level ${currentLevel}`;
+                console.log(`📺 Updated header to show: Level ${currentLevel}`);
+            } else {
+                console.error('❌ Level display element not found in header!');
+            }
+            
+            // Reset level statistics
+            resetLevelStats();
+            
+            // Generate and load new level directly (don't use selectLevel which has validation)
+            console.log(`🎲 Loading Level ${currentLevel} configuration...`);
+            initializeGameState();
+            
+            // Save progress
+            saveGameProgress();
+            
+            console.log(`✅ Successfully started Level ${currentLevel}, Unlocked: ${unlockedLevels}`);
+        } else {
+            console.log('🏁 All levels completed!');
+        }
+    }
+    
+    // Reset level statistics - hints persist across levels
+    function resetLevelStats() {
+        levelStartTime = Date.now();
+        moveCount = 0;
+        // hintsRemaining is NOT reset - hints persist across levels
+        moveHistory = []; // Clear move history
+        redoHistory = []; // Clear redo history
+        bombUsedThisLevel = false;
+        bombMode = false;
+        document.body.classList.remove('bomb-mode-active');
+        document.getElementById('bomb-btn')?.classList.remove('bomb-btn-active');
+        shuffleUsedThisLevel = false;
+        shuffleMode = false;
+        document.body.classList.remove('shuffle-mode-active');
+        document.getElementById('shuffle-btn')?.classList.remove('shuffle-btn-active');
+        is2xUsedThisLevel = false;
+        is2xModeActive = false;
+        is5xUsedThisLevel = false;
+        is5xModeActive = false;
+
+        if (timerInterval) clearInterval(timerInterval);
+        timerInterval = null;
+        const timerDisplay = document.getElementById('timer-display');
+        timerDisplay.classList.add('hidden');
+        timerDisplay.classList.remove('timer-active');
+        document.getElementById('2x-btn')?.classList.remove('_2x-btn-active'); // CSS Fix
+        document.getElementById('5x-btn')?.classList.remove('_5x-btn-active'); // CSS Fix
+
+        console.log(`🔄 Level stats reset - hints preserved: ${hintsRemaining}`);
+        
+        // Clear selection
+        if (selectedTube !== null) {
+            highlightTube(selectedTube, false);
+            selectedTube = null;
+        }
+        
+        // Update hint display (no change, just refresh UI)
+        updateHintDisplay();
+    }
+    
+    // Update points display with enhanced visual feedback
+    function updatePointsDisplay() {
+        console.log('💰 Updating points display to:', playerPoints);
+        
+        let pointsDisplay = null;
+        
+        // Method 1: Find by data attribute
+        pointsDisplay = document.querySelector('[data-points-display]');
+        
+        // Method 2: Find by monetization_on icon and sibling
+        if (!pointsDisplay) {
+            const coinIcons = document.querySelectorAll('header .material-icons');
+            for (let icon of coinIcons) {
+                if (icon.textContent.trim() === 'monetization_on') {
+                    const parent = icon.parentElement;
+                    const textSpan = parent.querySelector('span:not(.material-icons)');
+                    if (textSpan) {
+                        pointsDisplay = textSpan;
+                        // Add data attribute for future lookups
+                        textSpan.setAttribute('data-points-display', 'true');
+                        console.log('✅ Found points display via monetization_on icon method');
+                        break;
+                    }
+                }
+            }
+        }
+        
+        // Method 3: Find by container structure
+        if (!pointsDisplay) {
+            const grayContainers = document.querySelectorAll('header .bg-gray-800');
+            for (let container of grayContainers) {
+                const hasMonetizationIcon = container.querySelector('.material-icons[class*="text-yellow"]');
+                if (hasMonetizationIcon && hasMonetizationIcon.textContent.includes('monetization_on')) {
+                    const textSpan = container.querySelector('span:not(.material-icons)');
+                    if (textSpan) {
+                        pointsDisplay = textSpan;
+                        textSpan.setAttribute('data-points-display', 'true');
+                        console.log('✅ Found points display via container structure method');
+                        break;
+                    }
+                }
+            }
+        }
+        
+        // If still not found, create new element
+        if (!pointsDisplay) {
+            console.warn('Points display element not found, creating new one');
+            const header = document.querySelector('header');
+            if (header) {
+                const container = document.createElement('div');
+                container.className = 'bg-gray-800/50 flex items-center font-bold py-2 px-4 rounded-full shadow-lg';
+                container.innerHTML = `
+                    <span class="material-icons text-yellow-400 mr-2">monetization_on</span>
+                    <span class="text-lg sm:text-xl" data-points-display="true">0</span>
+                `;
+                header.appendChild(container);
+                pointsDisplay = container.querySelector('[data-points-display]');
+            }
+        }
+        
+        // Update points display with animation
+        if (pointsDisplay) {
+            const oldValue = parseInt(pointsDisplay.textContent) || 0;
+            const newValue = playerPoints;
+            
+            // Update the display
+            pointsDisplay.textContent = newValue.toString();
+            
+            // Add visual feedback for points change
+            if (newValue > oldValue) {
+                // Green flash effect for points increase
+                pointsDisplay.classList.add('text-green-400', 'scale-110');
+                setTimeout(() => {
+                    pointsDisplay.classList.remove('text-green-400', 'scale-110');
+                }, 1000);
+                
+                // Show floating points animation
+                const pointsAdded = newValue - oldValue;
+                if (pointsAdded > 0) {
+                    showFloatingPoints(pointsAdded);
+                }
+            }
+            
+            console.log(`✅ Points display updated: ${oldValue} → ${newValue}`);
+        } else {
+            console.error('❌ Failed to find or create points display element');
+            console.log('🔍 Available elements in header:');
+            const headerElements = document.querySelectorAll('header *');
+            headerElements.forEach((el, index) => {
+                console.log(`  ${index}: ${el.tagName} - ${el.className} - "${el.textContent.trim()}"`);
+            });
+        }
+    }
+    
+    // Save game progress including hints balance
+    function saveGameProgress() {
+        localStorage.setItem('ballSortProgress', JSON.stringify({
+            currentLevel,
+            playerPoints,
+            unlockedLevels,
+            hintsRemaining, // Save current hints balance
+            musicEnabled,
+            soundFXEnabled
+        }));
+        console.log(`💾 Progress saved: Level ${currentLevel}, Points ${playerPoints}, Hints ${hintsRemaining}`);
+    }
+    
+    // Load game progress
+    function loadGameProgress() {
+        try {
+            const savedProgress = localStorage.getItem('ballSortProgress');
+            if (savedProgress) {
+                const progress = JSON.parse(savedProgress);
+                currentLevel = progress.currentLevel || 1;
+                playerPoints = progress.playerPoints || 0;
+                unlockedLevels = progress.unlockedLevels || 1;
+                hintsRemaining = progress.hintsRemaining !== undefined ? progress.hintsRemaining : 10;
+                musicEnabled = progress.musicEnabled !== undefined ? progress.musicEnabled : true;
+                soundFXEnabled = progress.soundFXEnabled !== undefined ? progress.soundFXEnabled : true;
+                
+                console.log('Loaded progress:', { currentLevel, playerPoints, unlockedLevels, hintsRemaining });
+            } else {
+                // Set default values for fresh start
+                currentLevel = 1;
+                playerPoints = 0;
+                unlockedLevels = 1;
+                hintsRemaining = 10; // Start with 10 hints for new players
+                musicEnabled = true;
+                soundFXEnabled = true;
+                
+                console.log('Starting fresh game with 10 hints');
+            }
+        } catch (error) {
+            console.error('Error loading progress:', error);
+            // Fallback to defaults
+            currentLevel = 1;
+            playerPoints = 0;
+            unlockedLevels = 1;
+            hintsRemaining = 10; 
+            musicEnabled = true;
+            soundFXEnabled = true;
+        }
+        
+        updatePointsDisplay();
+        updateHintDisplay(); 
+        
+        // Update level display in header
+        const levelDisplay = document.querySelector('header .bg-gray-700');
+        if (levelDisplay) {
+            levelDisplay.textContent = `Level ${currentLevel}`;
+        }
+    }
+    
+    // Show game complete message
+    function showGameCompleteMessage() {
+        showCustomMessage(`🎉 Congratulations! You've completed all 10010 levels!\n\nTotal Points: ${playerPoints}\n\nYou are a Ball Sort Master! 🏆`);
+    }
+    
+    function showLevelCompletePopup() {
+        const popup = document.getElementById('level-complete-popup');
+        if (!popup) {
+            console.error('Level complete popup not found!');
+            return;
+        }
+
+        // Notify Android native bridge of level completion
+        try {
+            if (window.AndroidBridge && typeof AndroidBridge.onLevelComplete === 'function') {
+                AndroidBridge.onLevelComplete(currentLevel);
+            }
+        } catch (e) { console.warn("AndroidBridge not available or method failed:", e)}
+
+        // Proactive ad preloading: Start loading interstitial ad if this level will show ads
+        // This ensures the ad is ready when user clicks Next Level, preventing blank screens
+        if (window.AndroidBridge && typeof AndroidBridge.shouldShowInterstitialOnNextLevel === 'function') {
+            const shouldShowAd = AndroidBridge.shouldShowInterstitialOnNextLevel(currentLevel);
+            if (shouldShowAd) {
+                console.log(`📺 Preloading interstitial ad for Level ${currentLevel + 1} during popup display`);
+                // Request ad preloading - this will start loading the ad in background
+                if (typeof AndroidBridge.preloadInterstitialAd === 'function') {
+                    AndroidBridge.preloadInterstitialAd();
+                }
+            }
+        }
+
+        let levelPoints = calculateLevelPoints();
+        let multiplier = 1;
+
+        if (is2xModeActive) {
+            levelPoints *= 2;
+            multiplier = 2;
+        } else if (is5xModeActive) {
+            levelPoints *= 5;
+            multiplier = 5;
+        }
+
+        if (timerInterval) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            const timerDisplay = document.getElementById('timer-display');
+            timerDisplay.classList.add('hidden');
+            timerDisplay.classList.remove('timer-active');
+        }
+        is2xModeActive = false;
+        is5xModeActive = false;
+        
+        playerPoints += levelPoints;
+        updatePointsDisplay();
+        
+        if (currentLevel < 10010) {
+            const nextLevel = currentLevel + 1;
+            if (nextLevel > unlockedLevels) {
+                unlockedLevels = nextLevel;
+            }
+        }
+
+        saveGameProgress();
+        
+        const levelScoreElement = document.getElementById('level-score');
+        if (levelScoreElement) {
+            let scoreHTML = `
+                <div class="flex flex-col gap-2 text-center">
+                    <div class="text-lg">Total Moves: <span class="text-yellow-400">${moveCount}</span></div>
+                    <div class="text-xl font-bold">Final Score: <span class="text-green-400">${levelPoints}</span></div>
+            `;
+            if (multiplier > 1) {
+                 scoreHTML += `<div class="text-lg font-bold text-pink-400 animate-pulse">${multiplier}x Points!</div>`;
+            }
+            scoreHTML += `</div>`;
+            levelScoreElement.innerHTML = scoreHTML;
+        }
+        
+        const levelText = popup.querySelector('h2');
+        if (levelText) levelText.textContent = `Level ${currentLevel} Complete!`;
+
+        const nextButton = popup.querySelector('button');
+        if (nextButton) {
+            const newButton = nextButton.cloneNode(true);
+            nextButton.parentNode.replaceChild(newButton, nextButton);
+            if (currentLevel < 10010) {
+                newButton.textContent = `Next Level (${currentLevel + 1})`;
+                newButton.addEventListener('click', () => {
+                    popup.classList.add('hidden');
+                    
+                    // Check if we should show interstitial ad on Next Level click
+                    // This provides user consent through their action of clicking Next Level
+                    if (window.AndroidBridge && typeof AndroidBridge.shouldShowInterstitialOnNextLevel === 'function') {
+                        const shouldShowAd = AndroidBridge.shouldShowInterstitialOnNextLevel(currentLevel);
+                        if (shouldShowAd) {
+                            console.log(`📺 Showing interstitial ad before Level ${currentLevel + 1}`);
+                            AndroidBridge.showInterstitialAd();
+                            // Note: startNextLevel() will be called after ad is dismissed
+                            // via the FullScreenContentCallback in MainActivity.kt
+                            return;
+                        }
+                    }
+                    
+                    // No ad to show, proceed directly to next level
+                    startNextLevel();
+                });
+            } else {
+                newButton.textContent = 'Game Complete!';
+                newButton.addEventListener('click', () => {
+                    popup.classList.add('hidden');
+                    showGameCompleteMessage();
+                });
+            }
+        }
+        
+        addLevelCompleteEffects();
+        popup.classList.remove('hidden');
+        playSuccessSound();
+    }
+    
+    // Undo Functionality
+    function undoLastMove() {
+        if (hintsRemaining <= 0) {
+            showOutOfHintsPopup();
+            playHintSound();
+            return;
+        }
+        if (moveHistory.length === 0) {
+            playHintSound();
+            return;
+        }
+        
+        hintsRemaining--;
+        updateHintDisplay();
+        
+        const lastMove = moveHistory.pop();
+        redoHistory.push({ from: lastMove.from, to: lastMove.to });
+        
+        const ballToUndo = gameState[lastMove.to].pop();
+        gameState[lastMove.from].push(ballToUndo);
+        
+        moveCount = Math.max(0, moveCount - 1);
+        
+        updateTubeDisplay(lastMove.from);
+        updateTubeDisplay(lastMove.to);
+        
+        if (selectedTube !== null) {
+            highlightTube(selectedTube, false);
+            selectedTube = null;
+        }
+        
+        updateUndoRedoButtons();
+        playHintSound();
+        saveGameProgress();
+    }
+    
+    // Redo Functionality
+    function redoLastMove() {
+        if (hintsRemaining <= 0) {
+            showOutOfHintsPopup();
+            playHintSound();
+            return;
+        }
+        if (redoHistory.length === 0) {
+            playHintSound();
+            return;
+        }
+        
+        hintsRemaining--;
+        updateHintDisplay();
+        
+        const moveToRedo = redoHistory.pop();
+        moveHistory.push({ from: moveToRedo.from, to: moveToRedo.to });
+        
+        const ballToRedo = gameState[moveToRedo.from].pop();
+        gameState[moveToRedo.to].push(ballToRedo);
+        
+        moveCount++;
+        
+        updateTubeDisplay(moveToRedo.from);
+        updateTubeDisplay(moveToRedo.to);
+        
+        if (selectedTube !== null) {
+            highlightTube(selectedTube, false);
+            selectedTube = null;
+        }
+        
+        updateUndoRedoButtons();
+        playHintSound();
+        saveGameProgress();
+    }
+    
+    // Restart Game
+    function restartGame() {
+        if (hintsRemaining <= 0) {
+            showOutOfHintsPopup();
+            playHintSound();
+            return;
+        }
+        
+        hintsRemaining--;
+        updateHintDisplay();
+        
+        moveHistory = [];
+        redoHistory = [];
+        selectedTube = null;
+        hasMoved = false;
+        
+        document.querySelectorAll('.tube').forEach((tube, index) => highlightTube(index, false));
+        
+        initializeGameState();
+        updateUndoRedoButtons();
+        playHintSound();
+        saveGameProgress();
+    }
+    
+    // Update undo/redo button states
+    function updateUndoRedoButtons() {
+        const undoBtn = document.getElementById('undo-btn');
+        const redoBtn = document.getElementById('redo-btn');
+        
+        if (undoBtn) {
+            undoBtn.disabled = !hasMoved || moveHistory.length === 0;
+            undoBtn.classList.toggle('opacity-50', undoBtn.disabled);
+            undoBtn.classList.toggle('cursor-not-allowed', undoBtn.disabled);
+        }
+        
+        if (redoBtn) {
+            redoBtn.disabled = !hasMoved || redoHistory.length === 0;
+            redoBtn.classList.toggle('opacity-50', redoBtn.disabled);
+            redoBtn.classList.toggle('cursor-not-allowed', redoBtn.disabled);
+        }
+    }
+    
+    // Hint System
+    function updateHintDisplay() {
+        const hintDisplay = document.querySelector('#hints-counter');
+        if (hintDisplay) {
+            hintDisplay.textContent = `Hints: ${hintsRemaining}`;
+        }
+        
+        const hintButton = document.querySelector('#use-hint-btn');
+        if (hintButton) {
+            hintButton.disabled = hintsRemaining <= 0;
+            hintButton.classList.toggle('opacity-50', hintButton.disabled);
+            hintButton.classList.toggle('cursor-not-allowed', hintButton.disabled);
+        }
+        updateFeatureButtonStates(); // Use combined update function
+    }
+
+    // Combined function to update all feature button states AND visibility
+    function updateFeatureButtonStates() {
+        updateAddTubeButtonState();
+        updateBombButtonState();
+        updateShuffleButtonState();
+        update2xButtonState();
+        update5xButtonState();
+        updateFeatureVisibility(); // <-- Add call here
+    }
+    
+    function useHint() {
+        if (hintsRemaining <= 0) {
+            showOutOfHintsPopup();
+            playHintSound();
+            return;
+        }
+        if (window.hintInProgress) {
+            playHintSound();
+            return;
+        }
+        
+        window.hintInProgress = true;
+        hintsRemaining--;
+        updateHintDisplay();
+        saveGameProgress();
+        
+        const hint = findValidMove();
+        if (hint) {
+            highlightTube(hint.from, true);
+            setTimeout(() => {
+                highlightTube(hint.from, false);
+                highlightTube(hint.to, true);
+                setTimeout(() => {
+                    highlightTube(hint.to, false);
+                    window.hintInProgress = false;
+                }, 1500);
+            }, 1000);
+        } else {
+            window.hintInProgress = false;
+        }
+        
+        playHintSound();
+    }
+    
+    function findValidMove() {
+        for (let from = 0; from < gameState.length; from++) {
+            for (let to = 0; to < gameState.length; to++) {
+                 // Ensure source and target tubes exist
+                if (from !== to && gameState[from] && gameState[to]) {
+                    if (canMoveBall(from, to)) {
+                        return { from, to };
+                    }
+                }
+            }
+        }
+        return null;
+    }
+    let audioContext;
+    let musicEnabled = true;
+    let soundFXEnabled = true;
+    
+    // Initialize audio system
+    function initializeAudio() {
+      if (audioContext) return; // Prevent re-initialization
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (AudioContext) {
+        audioContext = new AudioContext();
+        
+        // Resume audio context on user interaction (required by browsers)
+        document.addEventListener('click', () => {
+          if (audioContext.state === 'suspended') {
+            audioContext.resume();
+          }
+        }, { once: true });
+      }
+      
+      // Generate enhanced background music
+      generateBackgroundMusic();
+    }
+    
+    // Custom message function to replace all alerts
+    function showCustomMessage(message) {
+      let existingPopup = document.getElementById('custom-alert-popup');
+      if (existingPopup) return; // Don't show multiple popups
+
+      const popup = document.createElement('div');
+      popup.id = 'custom-alert-popup';
+      popup.className = 'fixed inset-0 popup-bg flex items-center justify-center p-4 z-50';
+      popup.innerHTML = `
+          <div class="bg-gray-800 rounded-xl p-6 text-white text-center max-w-sm shadow-2xl border-4 border-yellow-400 relative animate-zoomIn">
+              <p class="text-lg mb-4">${message}</p>
+              <button class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded-full text-lg">OK</button>
+          </div>
+      `;
+      document.body.appendChild(popup);
+      
+      // Add event listener to OK button
+      const okButton = popup.querySelector('button');
+      okButton.addEventListener('click', () => {
+          document.body.removeChild(popup);
+      });
+    }
+
+    function showOutOfHintsPopup() {
+        const popup = document.getElementById('out-of-hints-popup');
+        if (!popup) return;
+        popup.classList.remove('hidden');
+
+        // Hook up close button
+        const closeBtn = document.getElementById('close-out-of-hints-btn');
+        closeBtn.onclick = () => popup.classList.add('hidden');
+
+        // Hook up Watch Ad button
+        const watchAdBtn = document.getElementById('popup-watch-ad-btn');
+        watchAdBtn.onclick = () => {
+            popup.classList.add('hidden');
+            playHintSound();
+            console.log('Watch Ad clicked from popup');
+            try {
+                if (window.AndroidBridge && typeof AndroidBridge.showRewardAd === 'function') {
+                    AndroidBridge.showRewardAd();
+                } else {
+                     showCustomMessage("Ad feature not available in this context.");
+                }
+            } catch(e) {
+                 showCustomMessage("Error accessing ad feature.");
+                 console.error("Ad bridge error:", e);
+            }
+        };
+    }
+    
+    // Generate enhanced background music using Web Audio API
+    function generateBackgroundMusic() {
+      if (!audioContext) return;
+      
+      let isPlaying = false;
+      let musicGain;
+
+      window.playEnhancedBackgroundMusic = function() {
+        if (!musicEnabled || isPlaying) return;
+        
+        isPlaying = true;
+        musicGain = audioContext.createGain();
+        musicGain.connect(audioContext.destination);
+        musicGain.gain.setValueAtTime(0.1, audioContext.currentTime);
+        
+        const melody = [
+          { note: 261.63, duration: 0.6 }, { note: 329.63, duration: 0.4 },
+          { note: 392.00, duration: 0.4 }, { note: 523.25, duration: 0.8 },
+          { note: 392.00, duration: 0.4 }, { note: 329.63, duration: 0.4 },
+          { note: 293.66, duration: 0.6 }, { note: 261.63, duration: 1.0 }
+        ];
+        
+        let noteIndex = 0;
+        let nextNoteTime = audioContext.currentTime;
+        
+        function scheduleNote() {
+          if (!musicEnabled || !isPlaying) return;
+          
+          const currentNote = melody[noteIndex];
+          const oscillator = audioContext.createOscillator();
+          const noteGain = audioContext.createGain();
+          
+          oscillator.connect(noteGain);
+          noteGain.connect(musicGain);
+          oscillator.frequency.setValueAtTime(currentNote.note, nextNoteTime);
+          oscillator.type = 'sine';
+          
+          const vibrato = audioContext.createOscillator();
+          const vibratoGain = audioContext.createGain();
+          vibrato.frequency.setValueAtTime(5, nextNoteTime);
+          vibratoGain.gain.setValueAtTime(2, nextNoteTime);
+          vibrato.connect(vibratoGain);
+          vibratoGain.connect(oscillator.frequency);
+          
+          noteGain.gain.setValueAtTime(0, nextNoteTime);
+          noteGain.gain.linearRampToValueAtTime(0.3, nextNoteTime + 0.1);
+          noteGain.gain.exponentialRampToValueAtTime(0.01, nextNoteTime + currentNote.duration);
+          
+          oscillator.start(nextNoteTime);
+          vibrato.start(nextNoteTime);
+          oscillator.stop(nextNoteTime + currentNote.duration);
+          vibrato.stop(nextNoteTime + currentNote.duration);
+          
+          nextNoteTime += currentNote.duration;
+          noteIndex = (noteIndex + 1) % melody.length;
+          
+          if (musicEnabled && isPlaying) {
+            setTimeout(scheduleNote, (currentNote.duration * 1000) - 50);
+          }
+        }
+        
+        scheduleNote();
+      };
+      
+      window.stopEnhancedBackgroundMusic = function() {
+        isPlaying = false;
+        if (musicGain) {
+          musicGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+        }
+      };
+    }
+    
+    // Enhanced sound effect functions
+    function playEnhancedBallMoveSound() {
+      if (!soundFXEnabled || !audioContext) return;
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+      oscillator.frequency.exponentialRampToValueAtTime(400, audioContext.currentTime + 0.15);
+      gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
+      oscillator.type = 'sine';
+      oscillator.start();
+      oscillator.stop(audioContext.currentTime + 0.15);
+    }
+    
+    function playEnhancedSuccessSound() {
+      if (!soundFXEnabled || !audioContext) return;
+      const notes = [523.25, 659.25, 783.99]; // C5, E5, G5
+      notes.forEach((frequency, index) => {
+        setTimeout(() => {
+          const oscillator = audioContext.createOscillator();
+          const gainNode = audioContext.createGain();
+          oscillator.connect(gainNode);
+          gainNode.connect(audioContext.destination);
+          oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+          gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.8);
+          oscillator.type = 'triangle';
+          oscillator.start();
+          oscillator.stop(audioContext.currentTime + 0.8);
+        }, index * 100);
+      });
+    }
+    
+    function playEnhancedHintSound() {
+      if (!soundFXEnabled || !audioContext) return;
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      oscillator.frequency.setValueAtTime(1000, audioContext.currentTime);
+      oscillator.frequency.setValueAtTime(1200, audioContext.currentTime + 0.1);
+      oscillator.frequency.setValueAtTime(1000, audioContext.currentTime + 0.2);
+      gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+      oscillator.type = 'square';
+      oscillator.start();
+      oscillator.stop(audioContext.currentTime + 0.3);
+    }
+    
+    // Enhanced audio control functions
+    function playBackgroundMusic() {
+      if (musicEnabled) {
+        if (window.playEnhancedBackgroundMusic) window.playEnhancedBackgroundMusic();
+        else backgroundMusic.play().catch(e => console.log('Audio play failed:', e));
+      }
+    }
+    
+    function stopBackgroundMusic() {
+      if (window.stopEnhancedBackgroundMusic) window.stopEnhancedBackgroundMusic();
+      backgroundMusic.pause();
+      backgroundMusic.currentTime = 0;
+    }
+    
+    function playSound(audioElement) {
+      if (soundFXEnabled) {
+        audioElement.currentTime = 0;
+        audioElement.play().catch(e => console.log('Sound play failed:', e));
+      }
+    }
+    
+    function playBallMoveSound() {
+      if (soundFXEnabled) {
+        if (audioContext && playEnhancedBallMoveSound) playEnhancedBallMoveSound();
+        else playSound(clickSound);
+      }
+    }
+    
+    function playSuccessSound() {
+      if (soundFXEnabled) {
+        if (audioContext && playEnhancedSuccessSound) playEnhancedSuccessSound();
+        else playSound(successSound);
+      }
+    }
+    
+    function playHintSound() {
+      if (soundFXEnabled) {
+        if (audioContext && playEnhancedHintSound) playEnhancedHintSound();
+        else playSound(clickSound);
+      }
+    }
+    
+    function toggleMusic(enabled) {
+        musicEnabled = enabled;
+        saveGameProgress();
+        if (enabled) playBackgroundMusic();
+        else stopBackgroundMusic();
+    }
+    
+    function toggleSoundFX(enabled) {
+        soundFXEnabled = enabled;
+        saveGameProgress();
+    }
+    
+    // Game elements
+    const settingsBtn = document.getElementById('settings-btn');
+    const settingsPopup = document.getElementById('settings-popup');
+    const closeSettingsBtn = document.getElementById('close-settings-btn');
+    const levelsBtn = document.getElementById('levels-btn');
+    const levelsPopup = document.getElementById('levels-popup');
+    const closeLevelsBtn = document.getElementById('close-levels-btn');
+    const hintAdChoicePopup = document.getElementById('hint-ad-choice-popup');
+    const closeHintAdChoiceBtn = document.getElementById('close-hint-ad-choice-btn');
+    const swapTopEmojisBtn = document.getElementById('swap-top-emojis-btn');
+
+    // Swap mode state
+    let swapMode = false;
+    let selectedTubeForSwap = null;
+    const SWAP_COST = 1; 
+    settingsBtn.addEventListener('click', () => {
+      playHintSound();
+      settingsPopup.classList.remove('hidden');
+      updateSettingsToggles();
+    });
+    closeSettingsBtn.addEventListener('click', () => {
+      playHintSound();
+      settingsPopup.classList.add('hidden');
+    });
+    levelsBtn.addEventListener('click', () => {
+      playHintSound();
+      generateLevelCards();
+      addLevelButtonSounds();
+      levelsPopup.classList.remove('hidden');
+    });
+    closeLevelsBtn.addEventListener('click', () => {
+      playHintSound();
+      levelsPopup.classList.add('hidden');
+    });
+    if (closeHintAdChoiceBtn) {
+       closeHintAdChoiceBtn.addEventListener('click', () => {
+        playHintSound();
+        hintAdChoicePopup.classList.add('hidden');
+      });
+    }
+
+    if (swapTopEmojisBtn) {
+        swapTopEmojisBtn.addEventListener('click', () => {
+            playHintSound();
+            swapMode = !swapMode;
+            swapTopEmojisBtn.classList.toggle('bg-purple-600', swapMode);
+            swapTopEmojisBtn.classList.toggle('hover:bg-purple-700', swapMode);
+            swapTopEmojisBtn.classList.toggle('bg-amber-500', !swapMode);
+            swapTopEmojisBtn.classList.toggle('hover:bg-amber-600', !swapMode);
+            
+            if (!swapMode && selectedTubeForSwap !== null) {
+                document.querySelectorAll('.tube')[selectedTubeForSwap].classList.remove('selected-for-swap');
+                selectedTubeForSwap = null;
+            }
+            
+            const icon = swapTopEmojisBtn.querySelector('.material-icons');
+            const text = swapTopEmojisBtn.querySelector('span:not(.material-icons)');
+            icon.textContent = swapMode ? 'swap_horiz' : 'swap_vert';
+            text.textContent = swapMode ? '取消交换' : '交换顶部表情符号';
+        });
+    }
+    
+    function addControlButtonSounds() {
+        const buttonConfigs = {
+            'undo-btn': undoLastMove,
+            'redo-btn': redoLastMove,
+            'refresh-btn': restartGame,
+            'add-tube-btn': addExtraTube,
+            'bomb-btn': activateBombMode,
+            'shuffle-btn': activateShuffleMode,
+            '2x-btn': activate2xMode,
+            '5x-btn': activate5xMode,
+            'use-hint-btn': (e) => {
+                if (e.currentTarget.disabled) return;
+                useHint();
+            }
+        };
+
+        Object.keys(buttonConfigs).forEach(id => {
+            const button = document.getElementById(id);
+            if (button) {
+                const newButton = button.cloneNode(true);
+                button.parentNode.replaceChild(newButton, button);
+                newButton.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    buttonConfigs[id](e);
+                });
+            }
+        });
+
+        document.querySelectorAll('button').forEach(button => {
+            if (button.textContent.includes('Watch Ad') && !button.id) {
+                const newButton = button.cloneNode(true);
+                button.parentNode.replaceChild(newButton, button);
+                newButton.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    playHintSound();
+                    console.log('Watch Ad clicked');
+                     // Call Android function to show ad and get hints
+                    try {
+                        if (window.AndroidBridge && typeof AndroidBridge.showRewardAd === 'function') {
+                            AndroidBridge.showRewardAd();
+                        } else {
+                             showCustomMessage("Ad feature not available in this context.");
+                        }
+                    } catch(e) {
+                         showCustomMessage("Error accessing ad feature.");
+                         console.error("Ad bridge error:", e);
+                    }
+                });
+            }
+        });
+    }
+
+     // Function called by Android after ad is watched successfully
+    window.addHintsAfterAd = function(amount) {
+        hintsRemaining += amount;
+        updateHintDisplay();
+        saveGameProgress();
+        playSuccessSound();
+        showCustomMessage(`You received ${amount} hints!`);
+    }
+
+    
+    // Add click sounds to level buttons
+    function addLevelButtonSounds() {
+        generateLevelCards();
+        
+        document.querySelectorAll('#levels-popup .level-card').forEach(card => {
+            const levelNum = card.dataset.level;
+            if (levelNum && (card.classList.contains('unlocked') || card.classList.contains('current'))) {
+                card.addEventListener('click', () => selectLevel(parseInt(levelNum)));
+            }
+        });
+        
+        document.querySelectorAll('#levels-popup .unlock-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const levelCard = button.closest('.level-card');
+                const level = parseInt(levelCard.dataset.level);
+                const cost = parseInt(button.querySelector('span:last-child').textContent);
+                
+                if (playerPoints >= cost) {
+                    playerPoints -= cost;
+                    unlockedLevels = Math.max(unlockedLevels, level);
+                    updatePointsDisplay();
+                    saveGameProgress();
+                    addLevelButtonSounds(); // Re-render and re-attach
+                    playSuccessSound();
+                } else {
+                    playHintSound();
+                    showCustomMessage(`Not enough points! You need ${cost} points but only have ${playerPoints}.`);
+                }
+            });
+        });
+    }
+    
+    function generateLevelCards() {
+        const levelsGrid = document.querySelector('#levels-popup .grid');
+        if (!levelsGrid) return;
+        
+        levelsGrid.innerHTML = '';
+        
+        for (let level = 1; level <= 10010; level++) {
+            const unlockCost = level === 1 ? 0 : (level >= 38 ? 1000 : 75 + level * 25);
+            const isCompleted = level < currentLevel;
+            const isUnlocked = level <= unlockedLevels;
+            const isCurrent = level === currentLevel;
+            
+            const levelCard = document.createElement('div');
+            levelCard.dataset.level = level;
+
+            let cardClass = 'level-card rounded-2xl p-6 flex flex-col items-center justify-center text-center';
+            let cardContent = '';
+
+            if (isCurrent) {
+                cardClass += ' current ring-4 ring-teal-400 animate-pulse cursor-pointer';
+                cardContent = `<span class="text-4xl font-bold text-white mb-3">${level}</span><div class="flex"><span class="material-icons text-yellow-400 text-xl">star</span><span class="material-icons text-gray-300 text-xl">star_border</span><span class="material-icons text-gray-300 text-xl">star_border</span></div>`;
+            } else if (isCompleted) {
+                cardClass += ' unlocked cursor-pointer';
+                cardContent = `<span class="text-4xl font-bold text-green-400 mb-3">${level}</span><div class="flex"><span class="material-icons text-yellow-400 text-xl">star</span><span class="material-icons text-yellow-400 text-xl">star</span><span class="material-icons text-yellow-400 text-xl">star</span></div><div class="text-xs text-green-400 mt-2">COMPLETED</div>`;
+            } else if (isUnlocked) {
+                cardClass += ' unlocked cursor-pointer';
+                cardContent = `<span class="text-4xl font-bold text-cyan-300 mb-3">${level}</span><div class="flex"><span class="material-icons text-gray-300 text-xl">star_border</span><span class="material-icons text-gray-300 text-xl">star_border</span><span class="material-icons text-gray-300 text-xl">star_border</span></div>`;
+            } else {
+                cardClass += ' locked';
+                cardContent = `<span class="material-icons text-gray-500 text-5xl mb-2 opacity-50">lock</span><span class="text-2xl font-bold text-gray-600 mb-3">${level}</span><button class="unlock-btn text-black font-bold py-2 px-4 rounded-full flex items-center text-sm shadow-lg"><span class="material-icons text-sm mr-1">monetization_on</span><span>${unlockCost}</span></button>`;
+            }
+            
+            levelCard.className = cardClass;
+            levelCard.innerHTML = cardContent;
+            levelsGrid.appendChild(levelCard);
+        }
+    }
+    
+    function selectLevel(levelNumber) {
+        if (levelNumber > unlockedLevels) {
+            playHintSound();
+            showCustomMessage(`Level ${levelNumber} is locked! Complete level ${unlockedLevels} first.`);
+            return;
+        }
+        
+        document.getElementById('levels-popup').classList.add('hidden');
+        currentLevel = levelNumber;
+        
+        const levelDisplay = document.querySelector('header .bg-gray-700');
+        if (levelDisplay) levelDisplay.textContent = `Level ${levelNumber}`;
+        
+        resetLevelStats();
+        initializeGameState();
+        playHintSound();
+    }
+    
+    function updateSettingsToggles() {
+        const musicToggle = document.querySelector('#music-toggle');
+        const soundFXToggle = document.querySelector('#sound-toggle');
+        if (musicToggle) musicToggle.checked = musicEnabled;
+        if (soundFXToggle) soundFXToggle.checked = soundFXEnabled;
+    }
+    
+    function initializeSettingsToggles() {
+        const musicToggle = document.querySelector('#music-toggle');
+        const soundFXToggle = document.querySelector('#sound-toggle');
+        
+        if (musicToggle) {
+            musicToggle.addEventListener('change', (e) => {
+                playSound(clickSound);
+                toggleMusic(e.target.checked);
+            });
+        }
+        
+        if (soundFXToggle) {
+            soundFXToggle.addEventListener('change', (e) => {
+                playSound(clickSound);
+                toggleSoundFX(e.target.checked);
+            });
+        }
+
+        initializeShareButton();
+    }
+
+     // --- Share: Android bridge + clipboard 'Copied!' feedback ---
+    function initializeShareButton() {
+        const appLink = 'https://play.google.com/store/apps/details?id=com.gems.sort.color.puzzle.game.liquid';
+        const buttons = document.querySelectorAll('button#share-btn');
+        buttons.forEach((btn) => {
+            // Skip buttons that already have inline onclick to avoid double triggers
+            if (btn.hasAttribute('onclick')) return;
+            btn.addEventListener('click', async (e) => {
+                try { playHintSound(); } catch (_) {}
+                if (btn.dataset.sharing === 'true') return;
+                btn.dataset.sharing = 'true';
+
+                // Copy link to clipboard and show 'Copied!' feedback
+                const shareTextEl = btn.querySelector('#share-btn-text') || btn.querySelector('.font-medium');
+                try {
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        await navigator.clipboard.writeText(appLink);
+                    } else {
+                        const textArea = document.createElement('textarea');
+                        textArea.value = appLink;
+                        textArea.style.position = 'fixed';
+                        textArea.style.top = '-9999px';
+                        document.body.appendChild(textArea);
+                        textArea.focus();
+                        textArea.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(textArea);
+                    }
+                    if (shareTextEl) {
+                        const prev = shareTextEl.textContent;
+                        shareTextEl.textContent = 'Copied!';
+                        setTimeout(() => { shareTextEl.textContent = prev || 'Share'; }, 2000);
+                    }
+                } catch (copyErr) {
+                    console.error('Error copying to clipboard:', copyErr);
+                }
+
+                // Invoke native share or Web Share API as fallback
+                try {
+                    if (window.AndroidBridge && typeof AndroidBridge.shareApp === 'function') {
+                        AndroidBridge.shareApp();
+                    } else if (navigator.share) {
+                        await navigator.share({
+                            title: 'Gems Color Sorting',
+                            text: "I'm playing Gems Color Sorting! Try it out:",
+                            url: appLink
+                        });
+                    } else {
+                        // No share available; clipboard already handled
+                    }
+                } catch (err) {
+                    console.error('Error during sharing:', err);
+                } finally {
+                    btn.dataset.sharing = 'false';
+                }
+            });
+        });
+    }
+    // --- End Share Function ---
+
+     // Combined function to update all feature button states AND visibility
+    function updateFeatureButtonStates() {
+        updateAddTubeButtonState();
+        updateBombButtonState();
+        updateShuffleButtonState();
+        update2xButtonState();
+        update5xButtonState();
+        updateFeatureVisibility(); // <-- Add call here
+    }
+
+    function updateAddTubeButtonState() {
+        const addTubeBtn = document.getElementById('add-tube-btn');
+        const levelIndicator = document.getElementById('add-tube-level');
+        const nameIndicator = document.getElementById('add-tube-name');
+        if (!addTubeBtn || !levelIndicator || !nameIndicator) return;
+    
+        nameIndicator.classList.remove('hidden'); // Always show name
+        const config = levelConfigs.getConfig(currentLevel);
+        const isAlreadyUsed = config && gameState.length > config.tubes;
+        const requiredLevel = 50; // New requirement
+
+        if (currentLevel < requiredLevel) {
+            addTubeBtn.disabled = true;
+            addTubeBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            levelIndicator.classList.remove('hidden'); // Show level req
+            addTubeBtn.title = `Unlocks at Level ${requiredLevel}`;
+        } else {
+            levelIndicator.classList.add('hidden'); // Hide level req
+            if (hintsRemaining < 2 || isAlreadyUsed) {
+                addTubeBtn.disabled = true;
+                addTubeBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                addTubeBtn.title = isAlreadyUsed ? "Extra tube already added" : "Not enough hints (costs 2)";
+            } else {
+                addTubeBtn.disabled = false;
+                addTubeBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                addTubeBtn.title = "Add an extra tube (costs 2 hints)";
+            }
+        }
+    }
+    
+    function addExtraTube() {
+        const cost = 2;
+        const requiredLevel = 50;
+        if (currentLevel < requiredLevel) {
+            playHintSound();
+            return;
+        }
+        if (hintsRemaining < cost) {
+            if (hintsRemaining === 0) {
+                showOutOfHintsPopup();
+            } else {
+                showCustomMessage(`You need ${cost} hints for this feature. You only have ${hintsRemaining}.`);
+            }
+            playHintSound();
+            return;
+        }
+        
+        const config = levelConfigs.getConfig(currentLevel);
+        if (config && gameState.length > config.tubes) { // Check if already used
+             playHintSound();
+             return;
+        }
+
+        gameState.push([]);
+        hintsRemaining -= cost;
+    
+        updateGameDisplay();
+        updateHintDisplay(); // This now calls updateAddTubeButtonState too
+    
+        playSuccessSound();
+        saveGameProgress();
+    }
+    
+    function updateBombButtonState() {
+        const bombBtn = document.getElementById('bomb-btn');
+        const levelIndicator = document.getElementById('bomb-level');
+        const nameIndicator = document.getElementById('bomb-name');
+        if (!bombBtn || !levelIndicator || !nameIndicator) return;
+
+        nameIndicator.classList.remove('hidden'); // Always show name
+         const requiredLevel = 30; // New requirement
+
+        if (currentLevel < requiredLevel) {
+            bombBtn.disabled = true;
+            bombBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            levelIndicator.classList.remove('hidden'); // Show level req
+            bombBtn.title = `Unlocks at Level ${requiredLevel}`;
+        } else {
+            levelIndicator.classList.add('hidden'); // Hide level req
+            if (bombUsedThisLevel) {
+                bombBtn.disabled = true;
+                bombBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                bombBtn.title = "Bomb used for this level";
+            } else if (hintsRemaining < 2 && !bombMode) {
+                bombBtn.disabled = true;
+                bombBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                bombBtn.title = "Not enough hints (costs 2)";
+            } else {
+                bombBtn.disabled = false;
+                bombBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                bombBtn.title = "Use Bomb (costs 2 hints)";
+            }
+        }
+    }
+
+    function activateBombMode() {
+        const bombBtn = document.getElementById('bomb-btn');
+         const requiredLevel = 30; // New requirement
+        if (currentLevel < requiredLevel) {
+            playHintSound();
+            return;
+        }
+        // Check cost on activation
+        const cost = 2;
+        if (hintsRemaining < cost && !bombMode) { // only check cost if activating, not deactivating
+            if (hintsRemaining === 0) {
+                showOutOfHintsPopup();
+            } else {
+                showCustomMessage(`You need ${cost} hints for this feature. You only have ${hintsRemaining}.`);
+            }
+            playHintSound();
+            return;
+        }
+        if (bombBtn.disabled && !bombMode) return;
+
+
+        bombMode = !bombMode;
+        document.body.classList.toggle('bomb-mode-active', bombMode);
+        bombBtn.classList.toggle('bomb-btn-active', bombMode);
+        
+        if (bombMode) {
+            playHintSound();
+            if (selectedTube !== null) {
+                highlightTube(selectedTube, false);
+                selectedTube = null;
+            }
+            if (shuffleMode) activateShuffleMode(); // Deactivate shuffle if active
+        }
+    }
+
+    function useBombOnTube(tubeIndex) {
+         if (!gameState[tubeIndex] || gameState[tubeIndex].length === 0) { // Add check
+            playHintSound(); 
+            return;
+        }
+
+        const cost = 2;
+        if (hintsRemaining < cost) {
+             // This case should theoretically not be reachable if activateBombMode worked
+            if (hintsRemaining === 0) {
+                showOutOfHintsPopup();
+            } else {
+                showCustomMessage(`You need ${cost} hints for this feature. You only have ${hintsRemaining}.`);
+            }
+            playHintSound();
+            activateBombMode(); // Deactivate
+            return;
+        }
+
+        hintsRemaining -= cost;
+        bombUsedThisLevel = true; // Mark as used
+        updateHintDisplay(); // Update display after cost
+        
+        const colorToRemove = gameState[tubeIndex][gameState[tubeIndex].length - 1];
+        
+        gameState.forEach((tube, tIndex) => {
+             if (tube) { // Add check
+                const originalLength = tube.length;
+                gameState[tIndex] = tube.filter(ballColor => ballColor !== colorToRemove);
+                if (gameState[tIndex].length < originalLength) {
+                     const tubeEl = document.querySelectorAll('.tube')[tIndex];
+                     if (tubeEl) { // Add check
+                         tubeEl.style.animation = 'flash 0.5s';
+                         setTimeout(() => { tubeEl.style.animation = ''; }, 500);
+                     }
+                }
+             }
+        });
+        
+        playSuccessSound(); 
+        
+        activateBombMode(); // Deactivate after use
+        updateGameDisplay();
+        updateBombButtonState(); // Update button state (will now be disabled)
+        saveGameProgress();
+
+        if (checkLevelComplete()) {
+            setTimeout(showLevelCompletePopup, 500);
+        }
+    }
+
+    function updateShuffleButtonState() {
+        const shuffleBtn = document.getElementById('shuffle-btn');
+        const levelIndicator = document.getElementById('shuffle-level');
+        const nameIndicator = document.getElementById('shuffle-name');
+        if (!shuffleBtn || !levelIndicator || !nameIndicator) return;
+
+        nameIndicator.classList.remove('hidden'); // Always show name
+         const requiredLevel = 10; // New requirement
+
+        if (currentLevel < requiredLevel) {
+            shuffleBtn.disabled = true;
+            shuffleBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            levelIndicator.classList.remove('hidden'); // Show level req
+            shuffleBtn.title = `Unlocks at Level ${requiredLevel}`;
+        } else {
+             levelIndicator.classList.add('hidden'); // Hide level req
+            if (shuffleUsedThisLevel) {
+                shuffleBtn.disabled = true;
+                shuffleBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                shuffleBtn.title = "Shuffle used for this level";
+            } else if (hintsRemaining < 2 && !shuffleMode) {
+                shuffleBtn.disabled = true;
+                shuffleBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                shuffleBtn.title = "Not enough hints (costs 2)";
+            } else {
+                shuffleBtn.disabled = false;
+                shuffleBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                shuffleBtn.title = "Shuffle a tube (costs 2 hints)";
+            }
+        }
+    }
+
+    function activateShuffleMode() {
+        const shuffleBtn = document.getElementById('shuffle-btn');
+         const requiredLevel = 10; // New requirement
+        if (currentLevel < requiredLevel) {
+            playHintSound();
+            return;
+        }
+        
+        const cost = 2;
+        if (hintsRemaining < cost && !shuffleMode) {
+            if (hintsRemaining === 0) {
+                showOutOfHintsPopup();
+            } else {
+                showCustomMessage(`You need ${cost} hints for this feature. You only have ${hintsRemaining}.`);
+            }
+            playHintSound();
+            return;
+        }
+        if (shuffleBtn.disabled && !shuffleMode) return;
+
+
+        shuffleMode = !shuffleMode;
+        document.body.classList.toggle('shuffle-mode-active', shuffleMode);
+        shuffleBtn.classList.toggle('shuffle-btn-active', shuffleMode);
+        
+        if (shuffleMode) {
+            playHintSound();
+            if (selectedTube !== null) {
+                highlightTube(selectedTube, false);
+                selectedTube = null;
+            }
+             if (bombMode) activateBombMode(); // Deactivate bomb if active
+        }
+    }
+
+    function shuffleTube(tubeIndex) {
+         if (!gameState[tubeIndex]) return; // Add check
+        const tube = gameState[tubeIndex];
+        if (tube.length <= 1) {
+            playHintSound();
+            return;
+        }
+
+        const cost = 2;
+        if (hintsRemaining < cost) {
+             if (hintsRemaining === 0) {
+                showOutOfHintsPopup();
+            } else {
+                showCustomMessage(`You need ${cost} hints for this feature. You only have ${hintsRemaining}.`);
+            }
+            playHintSound();
+            activateShuffleMode();
+            return;
+        }
+
+        hintsRemaining -= cost;
+        shuffleUsedThisLevel = true;
+        updateHintDisplay();
+
+        // Fisher-Yates shuffle algorithm
+        for (let i = tube.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [tube[i], tube[j]] = [tube[j], tube[i]];
+        }
+
+        const tubeEl = document.querySelectorAll('.tube')[tubeIndex];
+         if (tubeEl) { // Add check
+            tubeEl.style.animation = 'flash 0.5s';
+            setTimeout(() => { tubeEl.style.animation = ''; }, 500);
+         }
+        
+        playSuccessSound();
+        
+        activateShuffleMode();
+        updateGameDisplay();
+        updateShuffleButtonState();
+        saveGameProgress();
+    }
+
+    function update2xButtonState() {
+        const btn = document.getElementById('2x-btn');
+        const levelIndicator = document.getElementById('2x-level');
+        const nameIndicator = document.getElementById('2x-name');
+        if (!btn || !levelIndicator || !nameIndicator) return;
+
+        nameIndicator.classList.remove('hidden'); // Always show name
+         const requiredLevel = 100; // New requirement
+
+        if (currentLevel < requiredLevel) {
+            btn.disabled = true;
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+            levelIndicator.classList.remove('hidden'); // Show level req
+            btn.title = `Unlocks at Level ${requiredLevel}`;
+        } else {
+            levelIndicator.classList.add('hidden'); // Hide level req
+            if (is2xUsedThisLevel || is5xUsedThisLevel) {
+                btn.disabled = true;
+                btn.classList.add('opacity-50', 'cursor-not-allowed');
+                btn.title = "Multiplier feature already used";
+            } else if (hintsRemaining < 2) {
+                btn.disabled = true;
+                btn.classList.add('opacity-50', 'cursor-not-allowed');
+                btn.title = "Not enough hints (costs 2)";
+            } else {
+                btn.disabled = false;
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                btn.title = "Get 2x points (costs 2 hints)";
+            }
+        }
+    }
+
+    function activate2xMode() {
+        const cost = 2;
+        const requiredLevel = 100;
+        if (currentLevel < requiredLevel) {
+             playHintSound();
+             return;
+        }
+        if (hintsRemaining < cost || is2xUsedThisLevel || is5xUsedThisLevel) {
+            if (hintsRemaining < cost) {
+                 if (hintsRemaining === 0) {
+                    showOutOfHintsPopup();
+                } else {
+                    showCustomMessage(`You need ${cost} hints for this feature. You only have ${hintsRemaining}.`);
+                }
+            }
+            playHintSound();
+            return;
+        }
+
+        hintsRemaining -= cost;
+        updateHintDisplay();
+        saveGameProgress();
+
+        is2xModeActive = true;
+        is2xUsedThisLevel = true;
+        timeLeft = 60;
+
+        const timerDisplay = document.getElementById('timer-display');
+        const btn = document.getElementById('2x-btn');
+        timerDisplay.classList.remove('hidden');
+        timerDisplay.classList.add('timer-active');
+        btn.classList.add('_2x-btn-active'); // CSS Fix
+        update2xButtonState();
+        update5xButtonState(); // Also disable 5x button
+
+        timerInterval = setInterval(() => {
+            timeLeft--;
+            timerDisplay.textContent = `2x: ${timeLeft}s`;
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+                is2xModeActive = false;
+                timerDisplay.classList.add('hidden');
+                timerDisplay.classList.remove('timer-active');
+                btn.classList.remove('_2x-btn-active'); // CSS Fix
+                playHintSound();
+            }
+        }, 1000);
+        timerDisplay.textContent = `2x: ${timeLeft}s`;
+        playSuccessSound();
+    }
+    
+    function update5xButtonState() {
+        const btn = document.getElementById('5x-btn');
+        const levelIndicator = document.getElementById('5x-level');
+        const nameIndicator = document.getElementById('5x-name');
+        if (!btn || !levelIndicator || !nameIndicator) return;
+
+        nameIndicator.classList.remove('hidden'); // Always show name
+         const requiredLevel = 150; // New requirement
+
+        if (currentLevel < requiredLevel) {
+            btn.disabled = true;
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+            levelIndicator.classList.remove('hidden'); // Show level req
+            btn.title = `Unlocks at Level ${requiredLevel}`;
+        } else {
+            levelIndicator.classList.add('hidden'); // Hide level req
+            if (is5xUsedThisLevel || is2xUsedThisLevel) {
+                btn.disabled = true;
+                btn.classList.add('opacity-50', 'cursor-not-allowed');
+                btn.title = "Multiplier feature already used";
+            } else if (hintsRemaining < 5) {
+                btn.disabled = true;
+                btn.classList.add('opacity-50', 'cursor-not-allowed');
+                btn.title = "Not enough hints (costs 5)";
+            } else {
+                btn.disabled = false;
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                btn.title = "Get 5x points (costs 5 hints)";
+            }
+        }
+    }
+
+    function activate5xMode() {
+        const cost = 5;
+        const requiredLevel = 150;
+         if (currentLevel < requiredLevel) {
+             playHintSound();
+             return;
+         }
+        if (hintsRemaining < cost || is5xUsedThisLevel || is2xUsedThisLevel) {
+            if(hintsRemaining < cost) {
+                if (hintsRemaining === 0) {
+                    showOutOfHintsPopup();
+                } else {
+                    showCustomMessage(`You need ${cost} hints for this feature. You only have ${hintsRemaining}.`);
+                }
+            }
+            playHintSound();
+            return;
+        }
+
+        hintsRemaining -= cost;
+        updateHintDisplay();
+        saveGameProgress();
+
+        is5xModeActive = true;
+        is5xUsedThisLevel = true;
+        timeLeft = 20;
+
+        const timerDisplay = document.getElementById('timer-display');
+        const btn = document.getElementById('5x-btn');
+        timerDisplay.classList.remove('hidden');
+        timerDisplay.classList.add('timer-active');
+        btn.classList.add('_5x-btn-active'); // CSS Fix
+        update5xButtonState();
+        update2xButtonState(); // Also disable 2x button
+
+        timerInterval = setInterval(() => {
+            timeLeft--;
+            timerDisplay.textContent = `5x: ${timeLeft}s`;
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+                is5xModeActive = false;
+                timerDisplay.classList.add('hidden');
+                timerDisplay.classList.remove('timer-active');
+                btn.classList.remove('_5x-btn-active'); // CSS Fix
+                playHintSound();
+            }
+        }, 1000);
+        timerDisplay.textContent = `5x: ${timeLeft}s`;
+        playSuccessSound();
+    }
+
+    function updateFeatureVisibility() {
+        const undoContainer = document.getElementById('undo-container');
+        const redoContainer = document.getElementById('redo-container');
+        const resetContainer = document.getElementById('reset-container');
+        const shuffleContainer = document.getElementById('shuffle-container');
+        const bombContainer = document.getElementById('bomb-container');
+        const addTubeContainer = document.getElementById('add-tube-container');
+        const x2Container = document.getElementById('2x-container');
+        const x5Container = document.getElementById('5x-container');
+
+        if (!undoContainer || !redoContainer || !resetContainer || !shuffleContainer || !bombContainer || !addTubeContainer || !x2Container || !x5Container) {
+            console.error("One or more feature containers not found!");
+            return;
+        }
+
+        // Default visibility
+        undoContainer.classList.remove('hidden');
+        redoContainer.classList.remove('hidden');
+        resetContainer.classList.remove('hidden');
+        shuffleContainer.classList.remove('hidden');
+        bombContainer.classList.remove('hidden');
+        addTubeContainer.classList.remove('hidden');
+        x2Container.classList.add('hidden');
+        x5Container.classList.add('hidden');
+        
+        if (currentLevel >= 30) {
+            // When Bomb is unlocked (Lvl 30), hide Redo, show 2x
+            redoContainer.classList.add('hidden');
+            x2Container.classList.remove('hidden');
+        }
+        
+        if (currentLevel >= 50) {
+             // When Add Tube is unlocked (Lvl 50), hide Undo, show 5x
+             // This also means Redo is already hidden from the Lvl 30 check.
+            undoContainer.classList.add('hidden');
+            x5Container.classList.remove('hidden');
+        }
+    }
+
+
+    function startGame() {
+        loadGameProgress();
+        initializeAudio();
+        resetLevelStats();
+        initializeGameState(); // This now calls updateFeatureButtonStates() -> updateFeatureVisibility()
+        generateLevelCards();
+        addTubeInteractionHandlers();
+        updateSettingsToggles();
+        initializeSettingsToggles();
+        addControlButtonSounds();
+        addLevelButtonSounds();
+        
+        if (musicEnabled) {
+          setTimeout(playBackgroundMusic, 1000);
+        }
+        
+        document.querySelector('#level-complete-popup button')?.addEventListener('click', playSuccessSound);
+        window.audioInitialized = true;
+    }
+    
+    // --- Splash Screen Logic ---
+    document.addEventListener('DOMContentLoaded', () => {
+        const splashScreen = document.getElementById('splash-screen');
+        const gameContainer = document.getElementById('game-container');
+        
+        if (splashScreen && gameContainer) {
+            // Wait for 4 seconds (3s zoom-in + 1s hold)
+            setTimeout(() => {
+                // Start fading out the splash screen
+                splashScreen.classList.add('animate-fadeOut');
+                
+                // When fade out is done, hide splash and show game
+                splashScreen.addEventListener('animationend', () => {
+                    splashScreen.classList.add('hidden');
+                    gameContainer.classList.remove('hidden');
+                    
+                    // Now, initialize the game and audio
+                    if (!window.audioInitialized) {
+                        startGame();
+                    }
+                }, { once: true });
+
+            }, 4000); // 3s zoom + 1s hold = 4s total
+        } else {
+             // Fallback if splash screen isn't found
+             startGame();
+        }
+    });
+
+    
+    // Custom checkbox styles for the toggle switch
+    const style = document.createElement('style');
+    style.innerHTML = `
+            input:checked + .slider { background-color: #2563EB; }
+            input:checked + .slider:before { transform: translateX(24px); }
+            .selected-for-swap { box-shadow: 0 0 0 3px #9333ea !important; transform: scale(1.05); }
+        `;
+    document.head.appendChild(style);
+    
+    // Swap top emojis between two tubes
+    function swapTopEmojis(tubeIndex) {
+        if (currentLevel < 10 || hintsRemaining < SWAP_COST) {
+            if(hintsRemaining <= 0) {
+                showOutOfHintsPopup();
+            } else {
+                showCustomMessage(currentLevel < 10 ? 'Swap feature unlocks at Level 10!' : 'You need 1 hint to swap.');
+            }
+            return;
+        }
+
+        if (selectedTubeForSwap === null) {
+            if (!gameState[tubeIndex] || gameState[tubeIndex].length < 1) {
+                showCustomMessage('This tube is empty!');
+                return;
+            }
+            selectedTubeForSwap = tubeIndex;
+            document.querySelectorAll('.tube')[tubeIndex].classList.add('selected-for-swap');
+            return;
+        }
+
+        if (selectedTubeForSwap !== tubeIndex) {
+            if (!gameState[tubeIndex] || gameState[tubeIndex].length < 1) {
+                showCustomMessage('This tube is empty!');
+                return;
+            }
+
+            const firstTube = gameState[selectedTubeForSwap];
+            const secondTube = gameState[tubeIndex];
+             // Add checks before accessing array elements
+            if (firstTube.length > 0 && secondTube.length > 0) {
+                const temp = firstTube[firstTube.length - 1];
+                firstTube[firstTube.length - 1] = secondTube[secondTube.length - 1];
+                secondTube[secondTube.length - 1] = temp;
+
+                hintsRemaining -= SWAP_COST;
+                updateHintDisplay();
+                updateTubeDisplay(selectedTubeForSwap);
+                updateTubeDisplay(tubeIndex);
+
+                const selectedTubeEl = document.querySelectorAll('.tube')[selectedTubeForSwap];
+                if (selectedTubeEl) selectedTubeEl.classList.remove('selected-for-swap');
+
+                selectedTubeForSwap = null;
+                playHintSound();
+                saveGameProgress();
+            } else {
+                 showCustomMessage('Cannot swap with an empty tube!'); // Or handle silently
+                 const selectedTubeEl = document.querySelectorAll('.tube')[selectedTubeForSwap];
+                 if (selectedTubeEl) selectedTubeEl.classList.remove('selected-for-swap');
+                 selectedTubeForSwap = null;
+            }
+        } else {
+             const selectedTubeEl = document.querySelectorAll('.tube')[selectedTubeForSwap];
+             if (selectedTubeEl) selectedTubeEl.classList.remove('selected-for-swap');
+            selectedTubeForSwap = null;
+        }
+    }
+  </script>
+</body></html>
+
